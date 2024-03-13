@@ -1,0 +1,20 @@
+#!/bin/bash
+
+mkdir -p "$2"
+tmpdir=$(mktemp -d)
+trap "rm -rf $tmpdir" EXIT
+let i=0
+osxphotos export --not-hidden --regex "$1.*" "{created.date} {modified.date}" "$tmpdir" --convert-to-jpeg &> /dev/null
+
+for line in $(find "$tmpdir" -type f -not -name ".*"); do
+    let i++
+    if [[ -e "$line" ]] && ( [[ ${line##*.} == jpg ]] || [[ ${line##*.} == jpeg ]] ); then
+        target="$2/$1_$i.${line##*.}"
+        #/usr/local/bin/convert -density 100 "$line" "$target" 2>&1 
+        cp "$line" "$target"
+        echo -n " ![[$target|220]] "
+    fi
+done
+
+true
+

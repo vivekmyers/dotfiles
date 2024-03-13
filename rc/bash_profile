@@ -1,0 +1,5 @@
+export PATH="$HOME/.local/bin:$PATH"
+zsh="$(which zsh 2>/dev/null)"
+if [ -x "$zsh" ] && [ "$(basename $SHELL)" != "zsh" ]; then
+    exec $zsh
+fi

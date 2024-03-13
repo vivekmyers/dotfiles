@@ -1,0 +1,44 @@
+#!/bin/bash
+
+
+CONTENT=$(cat "$1")
+STRIP=$(echo "$CONTENT" | vim -Es +'/^----*$/norm dgg' +'?^----*$?norm dd' +'%p' +q! /dev/stdin)
+DATE="$(date -jf '%Y-%m-%d.md' "$1" +'%Y-%m-%d')"
+PREV=$(date -v-1d -jf '%Y-%m-%d' "$DATE" +'%Y-%m-%d')
+NEXT=$(date -v+1d -jf '%Y-%m-%d' "$DATE"  +'%Y-%m-%d')
+LONGDATE=$(date -jf '%Y-%m-%d' "$DATE" +'%A, %B %d')
+MONTH=$(date -jf '%Y-%m-%d' "$DATE" +'%B %Y')
+
+read -r -d '' TEMPLATE << EOF
+
+> [!col]
+>> [!previous] [$PREV](journal/$PREV)
+>
+>> [!text]  [${MONTH}](reflections/${MONTH/ /%20})
+>
+>> [!next] [$NEXT](journal/$NEXT)
+
+> [!schedule] $LONGDATE
+> <p/>
+>
+> |||
+> |---|---|
+$(echo "$DATE" | shortcuts run 'Get Day Events' | uniq)
+
+> [!todo]
+>\`\`\`tasks
+>(done is $DATE) OR (due date is $DATE) OR (due before $DATE AND not done)
+>\`\`\`
+
+--------
+
+$(echo "$STRIP" | sed '/[^ ]/,$!d' | tac | sed '/[^ ]/,$!d' | tac)
+
+--------
+
+$(getphotos "$DATE" attachments | xargs)
+
+EOF
+
+printf "\n%s\n" "$TEMPLATE" > "$1"
+echo wrote "$1"

@@ -1,0 +1,215 @@
+nnoremap ,, :w <CR>
+nnoremap <C-S> :w <CR>
+inoremap <C-S> <C-O>:w<CR>
+nnoremap <C-S><C-D> :w\|mksession! $VIMSESSION<CR>:qa<CR>
+inoremap <C-S><C-D> :w\|mksession! $VIMSESSION<CR>:qa<CR>
+noremap <C-E> :cclose\|lclose\|noh<CR>
+noremap <C-N><C-N> :e ~/.vimrc<CR>
+noremap <C-N><C-S> :e ~/.vim/UltiSnips/tex.snippets<CR>
+noremap <C-P> @:<CR>
+set autowrite
+noremap <C-M><C-M> :w\|:make<space><up>
+noremap <C-N><C-M> <Cmd>e makefile<CR>
+nnoremap ;; <Cmd>w\|mksession! $VIMSESSION<CR>
+nnoremap <C-Q> <Cmd>Explore<CR>
+nmap <Leader>/ <Cmd>bd<CR>
+nmap <Leader>p <Cmd>w\|vert term ++close ipython --no-confirm-exit --pylab -i %<CR>
+
+nmap ,n :NERDTreeFind<CR>
+nmap ,m :NERDTreeToggle<CR>
+set maxmempattern=5000
+
+
+syntax enable
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set mouse=a
+filetype plugin on
+filetype indent on
+
+inoremap <expr> <CR> getline('.') =~ '\item $' ? '<c-w><c-w>' : '<CR>'
+
+
+function! NextQuit()
+    execute 'try | n | catch | try | wq | catch | try | q | catch | endtry | endtry | endtry'
+endfunction
+
+nnoremap <C-D> :call NextQuit()<CR>
+inoremap <C-D> <C-O>:call NextQuit()<CR>
+nnoremap <C-S><C-Q> <Cmd>qa<CR>
+
+
+if has("nvim")
+    if empty(glob('~/.config/nvim/autoload/plug.vim'))
+        silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
+                    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+        autocmd VimEnter * call PlugInstall
+    endif
+else
+    if empty(glob('~/.vim/autoload/plug.vim'))
+        silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+                    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    endif
+endif
+
+if has('nvim')
+    call plug#begin('~/.config/nvim/plug.vim')
+else
+    call plug#begin('~/.vim/plug.vim')
+endif
+
+
+Plug 'junegunn/vim-plug'
+    nnoremap <Leader>pi :PlugInstall<CR>
+
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-rhubarb'
+Plug 'tpope/vim-fugitive'
+    nnoremap <Leader>g :G<space>
+    nnoremap <Leader>s :vert G<CR>
+
+Plug 'tpope/vim-unimpaired'
+Plug 'tpope/vim-commentary'
+Plug 'tpope/vim-repeat'
+Plug 'tpope/vim-sensible'
+Plug 'tpope/vim-vinegar'
+
+Plug 'scrooloose/nerdtree'
+Plug 'rafi/awesome-vim-colorschemes'
+
+Plug 'easymotion/vim-easymotion'
+    let g:EasyMotion_smartcase = 1
+    let g:EasyMotion_do_mapping = 0
+    map <Leader>j <Plug>(easymotion-j)
+    map <Leader>k <Plug>(easymotion-k)
+    map  <Leader>f <Plug>(easymotion-bd-f)
+    nmap <Leader>f <Plug>(easymotion-overwin-f)
+    nmap s <Plug>(easymotion-overwin-f2)
+    map <Leader>l <Plug>(easymotion-bd-jk)
+    nmap <Leader>l <Plug>(easymotion-overwin-line)
+    map  <Leader>w <Plug>(easymotion-bd-w)
+    nmap <Leader>w <Plug>(easymotion-overwin-w)
+    map  <Leader>e <Plug>(easymotion-bd-e)
+    nmap <Leader>e <Plug>(easymotion-overwin-e)
+
+Plug 'junegunn/vim-easy-align'
+    xmap ga <Plug>(EasyAlign)
+    nmap ga <Plug>(EasyAlign)
+
+Plug 'davidhalter/jedi-vim'
+    let g:jedi#goto_stubs_command = ""
+    let g:jedi#goto_assignments_command = ""
+
+
+Plug 'gioele/vim-autoswap'
+    let g:autoswap_detect_tmux = 1
+
+
+Plug 'lervag/vimtex'
+    let g:tex_flavor='latex'
+    let g:vimtex_quickfix_mode=0
+    if has('unix')
+        if has('mac')
+            let g:vimtex_view_method = "skim"
+            let g:vimtex_view_general_viewer
+                    \ = '/Applications/Skim.app/Contents/SharedSupport/displayline'
+            let g:vimtex_view_general_options = '-r @line @pdf @tex'
+            let g:vimtex_view_sync_method = "skim"
+        else
+            let g:latex_view_general_viewer = "zathura"
+            let g:vimtex_view_method = "zathura"
+        endif
+    elseif has('win32')
+    endif
+    let g:vimtex_quickfix_open_on_warning = 0
+    let g:vimtex_quickfix_mode = 2
+    if has('nvim')
+        let g:vimtex_compiler_progname = 'nvr'
+    endif
+    let g:tex_conceal = ""
+
+Plug 'sirver/ultisnips'
+    let g:UltiSnipsExpandTrigger = '<tab>'
+    let g:UltiSnipsJumpForwardTrigger = '<tab>'
+    let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
+
+Plug 'honza/vim-snippets'
+
+Plug 'KeitaNakamura/tex-conceal.vim'
+    set conceallevel=1
+    let g:tex_conceal='abdmg'
+    hi Conceal ctermbg=none
+
+Plug 'psf/black', { 'branch': 'stable' }
+
+Plug 'haya14busa/vim-easyoperator-phrase'
+Plug 'haya14busa/vim-easyoperator-line'
+
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
+    let g:airline_theme='violet'
+    let g:airline_solarized_bg='dark'
+    let g:airline_powerline_fonts = 1
+    let g:airline#extensions#tabline#enabled = 1
+    let g:airline#extensions#tabline#formatter = 'unique_tail'
+
+
+Plug 'yegappan/mru'
+    nmap <Leader>o :MRU<CR>
+    nmap <Leader><Leader>o :MRU 
+
+Plug 'dense-analysis/ale'
+    let g:ale_linters = {
+                \   'python': ['pylint'],
+                \   'tex': ['chktex'],
+                \}
+    let g:ale_fixers = {
+                \   'python': ['black', 'autoimport', 'remove_trailing_lines', 'trim_whitespace', 'autoflake'],
+                \   'tex': ['latexindent'],
+                \}
+    let g:ale_python_flake8_options = '--max-line-length=88'
+    let g:ale_python_pylint_options = '--disable=C,R,F'
+    nmap <Leader>; :ALEToggle<CR>
+    nmap <C-K> :ALEFix<CR>
+    nmap <silent> <Leader>, <Plug>(ale_previous_wrap)
+    nmap <silent> <Leader>. <Plug>(ale_next_wrap)
+
+
+Plug 'altercation/vim-colors-solarized'
+
+Plug 'github/copilot.vim'
+    imap <C-A> <Plug>(copilot-accept-word)
+    imap <C-\> <Plug>(copilot-suggest)
+
+
+call plug#end() 
+
+set background=dark
+try
+    colorscheme solarized
+    catch 
+endtry
+
+set autowrite
+set backspace=indent,eol,start
+set viminfo='20,<100
+setlocal spell
+set spelllang=en_us
+inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
+set hlsearch
+
+
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+
+nmap <Leader>r :source $MYVIMRC<CR>
+
+augroup vimrc   
+    autocmd! BufWritePost $MYVIMRC source % | echom "Reloaded " . $MYVIMRC | redraw
+    autocmd! BufWritePost $MYGVIMRC if has('gui_running') | so % | echom "Reloaded " . $MYGVIMRC | endif | redraw
+augroup END
+
+set guifont=Meslo\ LG\ S\ Regular\ for\ Powerline:h13
+
+
+

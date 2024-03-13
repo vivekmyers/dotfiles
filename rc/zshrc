@@ -1,0 +1,44 @@
+test -n "$PROF" && zmodload zsh/zprof
+
+export ZSH_DISABLE_COMPFIX=true
+export ZSH=$HOME/.omz
+
+ZSH_THEME="agnoster"
+
+ENABLE_CORRECTION="true"
+
+plugins=(
+  git
+  virtualenv
+  zsh_codex
+  zsh-syntax-highlighting
+  zsh-autosuggestions
+  z
+)
+DISABLE_AUTO_UPDATE=true
+source $ZSH/oh-my-zsh.sh
+check_cenv
+
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#808080"
+
+setopt no_histverify
+zstyle ':completion:*' completer _expand _complete _files \
+		_correct _approximate
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+autoload -Uz run-help
+alias help=run-help
+CORRECT_IGNORE_FILE='.*'
+
+zle -N create_completion
+bindkey '^X' create_completion
+
+if [ -f '$HOME/google-cloud-sdk/path.zsh.inc' ]; then . '$HOME/google-cloud-sdk/path.zsh.inc'; fi
+
+if [ -f '$HOME/google-cloud-sdk/completion.zsh.inc' ]; then . '$HOME/google-cloud-sdk/completion.zsh.inc'; fi
+
+export TERM=xterm-256color
+
+
+test -n "$PROF" && zprof || true
+

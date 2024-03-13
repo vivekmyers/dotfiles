@@ -1,0 +1,2 @@
+cmd="$1 sudo pkill -9 -u $2"
+eval "$cmd"

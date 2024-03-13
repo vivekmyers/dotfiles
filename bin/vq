@@ -1,0 +1,44 @@
+#!/bin/bash
+
+function loop {
+    (
+        tput reset && tmp="$(mktemp)"  && trap 'rm -f "$tmp"' EXIT && while true
+        do
+            COLS=$(($(tput cols)-1))
+            echo -n "" > "$tmp" && eval "$@" | for i in $(seq $(($(tput lines))))
+            do
+                IFS= read -r line
+                printf "%.${COLS}s$(tput sgr0)\n" "$(printf "%-${COLS}s" "$line")" >> "$tmp"
+            done && truncate -s -1 "$tmp" && tput cup 0 0 && cat "$tmp" && sleep 1 || break
+        done
+    )
+}
+
+function main {
+    test -n "$PARTITION" && local args=( -p $PARTITION )
+    SQUEUE_FORMAT2="JobID:.8 ,Name:.40 ,QOS:.15 ,UserName:.8 ,StateCompact:.2 ,TimeUsed:.12 ,NodeList:.20 ,Tres:.40 ,Reason" squeue "${args[@]}" | awk '
+    { counter++ }
+    BEGIN { all=0; highp=0; lowp=0; total=0; found=0; counter=0; size='$(tput lines)' }
+    $4=="'$USER'" { if ( $3 != "'$LOWPRIORITY'" ) { highp++ } else { lowp++ }; all++ }
+    $4=="'$USER'"&&$5=="R" { total++ }
+    $5=="R" { totals[$4]++ }
+    $5=="PD" { pending[$4]++ }
+    $5=="R" { anyrunning++ }
+    (NR<20||($4=="'$USER'"&&(($5=="R"||$3=="rail_gpu4")&&total<15||counter%int(found-15)==0&&found<size-28)))&&found<size-23 \
+        { printf "%010s %.170s\n", (NR>1?NR-1:"Rank"), $0; found++; counter=0; clean=1; next; }
+    clean { print "            ","..."; found++; clean=0 }
+    END {
+        print "'$(tput bold)'";
+        print "All jobs: " NR-1; print "My jobs: " all
+        print "My high priority: " highp; print "My low priority: " lowp;
+        #print "My running: " total; print "Other running: " anyrunning-total
+        print "'$(tput sgr0)'";
+        for (i in totals) { print i " running: " totals[i] }
+        print "";
+        for (i in pending) { print i " pending: " pending[i] }
+    }
+    ' | grep --color=always ' R \|^' | GREP_COLORS='ms=01;35' grep --color=always $USER'\|^'
+}
+
+loop main
+

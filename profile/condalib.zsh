@@ -156,7 +156,7 @@ function mkcenv()
 }
 
 function cinit {
-    cenv_name="$(basename $PWD)"
+    cenv_name="${1-$(basename $PWD)}"
     printf "$cenv_name\n" > ".cenv"
     chmod 600 .cenv
     AUTOSWITCH_PROJECT="$PWD"
@@ -174,6 +174,7 @@ function cact {
         conda activate "$cenv_name"
     else
         printf "No .cenv file in the current directory!\n"
+        return 1
     fi
 }
 
@@ -222,19 +223,20 @@ function fcenv {
         fi
 
         if [[ -n "$cenv_name" ]]; then
-            conda remove --name "$cenv_name" --yes --all &&
+            mamba remove --name "$cenv_name" --yes --all &&
             rm ".cenv" 
         fi
     fi
     cenv_name="$(basename $PWD)" &&
-    yes | conda create --name "$cenv_name" $@ &&
-    conda activate "$cenv_name" &&
-    cinst env &&
+    yes | mamba create --name "$cenv_name" $@ &&
 
     if [[ -f "environment.yml" ]]; then
       printf "Found an environment.yml file. Installing using conda...\n"
-      conda env update --name "$cenv_name" --file environment.yml || return
-    fi
+      mamba env update --name "$cenv_name" --file environment.yml || return
+    fi &&
+
+    mamba activate "$cenv_name" &&
+    cinst env &&
 
     printf "$cenv_name\n" > ".cenv" &&
     chmod 600 .cenv

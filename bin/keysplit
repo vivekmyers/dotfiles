@@ -5,7 +5,7 @@ path="$(readlink -f "$1")"
 dir="$(dirname "$path")"
 
 rm -f "$name.pdf"
-osascript ~/bin/keynote_export.applescript "$path" "$dir/$name.pdf" || exit 1
+osascript ~/.local/bin/keynote_export.applescript "$path" "$dir/$name.pdf" || exit 1
 rm -f "$name"/slide*.pdf
 mkdir "$name"
 pdfseparate $name.pdf "$name/slide%d.pdf"

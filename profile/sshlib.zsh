@@ -55,7 +55,7 @@ read -r -d '' SSH_EXPECT_SCRIPT << 'EOF'
 set timeout 15
 log_user 0
 set cmd [lrange $argv 0 end]
-if { [catch { system {[[ -t 0 ]]} } error] } {
+if { [catch { system {test -t 0} } error] } {
     spawn sh -c "cat | $cmd"
     set piped 1
     set timeout 5
@@ -74,7 +74,7 @@ expect {
     -nocase -re "\(login\|connected\|welcome\|\$\).*\n" {
         send_user -- "$expect_out(buffer)"
     }
-    -nocase "(*@*.brc.berkeley.edu) password: " {
+    -nocase "*.brc.berkeley.edu* password: " {
         set password [exec python -c "$env(GOOGLE_AUTH_SCRIPT)"]
         send "$password\r"
         expect "*\n"
@@ -121,9 +121,10 @@ exit [lindex $result 3]
 EOF
 
 function ssh_wrapper {
+    cmd=( $@ )
     if command -v expect &> /dev/null; then
         ( export GOOGLE_AUTH_SCRIPT
-          expect <(printf "%s" "$SSH_EXPECT_SCRIPT") "$@" )
+          expect <(printf "%s" "$SSH_EXPECT_SCRIPT") $cmd )
     else
         command "$@"
     fi

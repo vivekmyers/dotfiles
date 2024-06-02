@@ -1,0 +1,2 @@
+alt - h : yabai -m window --space $(yabai -m query --windows | jq '.[0].space-1') --focus
+alt - l : yabai -m window --space $(yabai -m query --windows | jq '.[0].space+1') --focus

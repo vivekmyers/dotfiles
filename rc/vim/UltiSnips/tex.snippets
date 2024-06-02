@@ -9,7 +9,6 @@ def comment():
 def env(name):
 	[x,y] = vim.eval("vimtex#env#is_inside('" + name + "')") 
 	return x != '0' and y != '0'
-
 endglobal
 
 snippet makeat "makeatletter" bA
@@ -30,8 +29,33 @@ $1
 $0
 endsnippet
 
+snippet cmt "comment" w
+%%`!v tex#stamp()`: ${1:${VISUAL}}
+endsnippet
+
+snippet tdo "todo" w
+\todo[inline]{
+	`!v tex#stamp()`: ${1:${VISUAL}}
+}
+endsnippet
+
+snippet hl "highlight" w
+{\color{orange}
+	`!v tex#stamp()`: ${1:${VISUAL}}
+}
+endsnippet
+
+snippet vm "stamp" w
+`!v tex#stamp()`
+endsnippet
+
+snippet ig "includegraphics" w
+\includegraphics[width=${1:0.8}\linewidth]{${2:image}}
+$0
+endsnippet
+
 snippet em "emph" w
-\emph{$1}$0
+\emph{${1:${VISUAL}}}$0
 endsnippet
 
 snippet thepr "numexpr" wA
@@ -54,7 +78,7 @@ _{n}
 endsnippet
 
 snippet tpt "textt" wA
-\texttt{$1}$0
+\texttt{${1:${VISUAL}}}$0
 endsnippet
 
 snippet parts "Question parts" b
@@ -63,47 +87,61 @@ snippet parts "Question parts" b
 \end{parts}
 endsnippet
 
-snippet pset "Pset template" b
-\documentclass[12pt]{pset}
 
-\title{${1:class} --- HW ${2:n}}
-\author{${3:name}}
+snippet stand "Standalone template" b
+\documentclass[12pt,border=1cm,convert]{standalone}
 
-\begin{document}
-\maketitle
-
-\problem
-$0
-
-\end{document}
-endsnippet
-
-
-snippet template "Basic template" b
-\documentclass[a4paper]{article}
-
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{textcomp}
-\usepackage[dutch]{babel}
-\usepackage{amsmath, amssymb}
-
-
-% figure support
-\usepackage{import}
-\usepackage{xifthen}
-\pdfminorversion=7
-\usepackage{pdfpages}
-\usepackage{transparent}
-\newcommand{\incfig}[1]{%
-	\def\svgwidth{\columnwidth}
-	\import{./figures/}{#1.pdf_tex}
-}
-
-\pdfsuppresswarningpagegroup=1
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
 
 \begin{document}
 	$0
+\end{document}
+
+endsnippet
+
+
+
+snippet doc "Basic template" b
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage[numbers]{natbib}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{mathtools}
+\usepackage{thmtools}
+\usepackage{cancel}
+\usepackage{todonotes}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{booktabs}
+
+\title{$1}
+\author{$2}
+\date{$3}
+
+\begin{document}
+	\maketitle
+
+	$0
+	
+	\bibliographystyle{plainnat}
+	\bibliography{references}
+
 \end{document}
 endsnippet
 
@@ -205,6 +243,10 @@ snippet => "implies" Ai
 \implies
 endsnippet
 
+snippet dkl "Dkl" Ai
+D_{\mathrm{KL}}\left[$1\middle\|$2\right]$0
+endsnippet
+
 snippet =< "implied by" Ai
 \impliedby
 endsnippet
@@ -215,7 +257,7 @@ snippet iff "iff" Ai
 endsnippet
 
 snippet mk "Math" wA
-$${1}$`!p
+$${1:${VISUAL}}$`!p
 if t[2] and t[2][0] not in [',', '.', '?', '-', ' ']:
 	snip.rv = ' '
 else:
@@ -226,13 +268,13 @@ endsnippet
 snippet dm "Math" wA
 \[
 ${1:${VISUAL}}
-.\] $0
+\] $0
 endsnippet
 
 snippet ali "Align" bA
 \begin{align*}
 	${1:${VISUAL}}
-.\end{align*}
+\end{align*}
 endsnippet
 
 
@@ -512,7 +554,7 @@ snippet plot "Plot" w
 endsnippet
 
 context "math()"
-snippet tr "transpose" iA
+snippet '(?<![\\])tr' "transpose" riA
 ^{T}
 endsnippet
 
@@ -523,7 +565,7 @@ endsnippet
 
 context "math()"
 snippet cal "mathcal" iA
-\mathcal $0
+\mathcal{${1:${VISUAL}}}$0
 endsnippet
 
 snippet lll "l" iA
@@ -552,19 +594,19 @@ endsnippet
 
 priority 100
 context "math()"
-snippet '(?<!\\)(sin|cos|arccot|cot|csc|ln|log|exp|star|perp)' "ln" rwA
+snippet '(?<![\\a-zA-Z])(sin|cos|arccot|cot|csc|ln|log|exp|star|perp)' "ln" rwA
 \\`!p snip.rv = match.group(1)`
 endsnippet
 
 priority 100
 context "math()"
-snippet '(?<!\\)(mu|xi|sigma|varepsilon|alpha|omega|lambda|beta|zeta|nu|theta|psi|phi|rho|epsilon|varphi)' "greek" rwA
+snippet '(?<![\\a-zA-Z])(mu|xi|sigma|varepsilon|alpha|omega|lambda|beta|zeta|nu|theta|psi|phi|rho|epsilon|varphi|gamma|delta|tau)' "greek" rwA
 \\`!p snip.rv = match.group(1)`
 endsnippet
 
 priority 100
 context "math()"
-snippet '(?<!\\)(veps)' "greek" rwA
+snippet '(?<![\\a-zA-Z])(veps)' "greek" rwA
 \varepsilon
 endsnippet
 
@@ -576,7 +618,7 @@ endsnippet
 
 priority 200
 context "math()"
-snippet '(?<!\\)(arcsin|arccos|arctan|arccot|arccsc|arcsec|pi|zeta|int)' "ln" rwA
+snippet '(?<![\\a-zA-Z])(arcsin|arccos|arctan|arccot|arccsc|arcsec|pi|zeta|int)' "ln" rwA
 \\`!p snip.rv = match.group(1)`
 endsnippet
 
@@ -713,23 +755,23 @@ endsnippet
 
 context "math()"
 snippet '(?<!i)sts' "text subscript" irA
-_\text{$1} $0
+_\text{${1:${VISUAL}}} $0
 endsnippet
 
 context "math()"
 snippet tt "text" iA
-\text{$1}$0
+\text{${1:${VISUAL}}}$0
 endsnippet
 
 context "math()"
 snippet op "operatorname" i
-\operatorname{$1}($2)$0
+\operatorname{${1:${VISUAL}}}($2)$0
 endsnippet
 
 context "math()"
 snippet case "cases" wA
 \begin{cases}
-	$1
+	${1:${VISUAL}}
 \end{cases}
 endsnippet
 
@@ -781,7 +823,7 @@ endsnippet
 
 context "math()"
 snippet bb "mathbb" iA
-\mathbb $0
+\mathbb{${1:${VISUAL}}}$0
 endsnippet
 
 context "math()"
@@ -795,19 +837,19 @@ snippet DD "D" iA
 endsnippet
 
 snippet ti "textit" w
-\textit{$1}$0
+\textit{${1:${VISUAL}}}$0
 endsnippet
 
-snippet tb "textit" w
-\textbf{$1}$0
+snippet tb "textbf" w
+\textbf{${1:${VISUAL}}}$0
 endsnippet
 
 snippet mb "mathbf" w
-\mathbf{$1}$0
+\mathbf{${1:${VISUAL}}}$0
 endsnippet
 
 snippet mi "mathit" w
-\mathit{$1}$0
+\mathit{${1:${VISUAL}}}$0
 endsnippet
 
 

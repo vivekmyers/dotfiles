@@ -1,0 +1,16 @@
+#!/bin/bash
+
+curr=
+
+while true; do
+
+    code=$(active "$1")
+
+    if [[ $curr != $code ]]; then
+        osascript -e 'display notification "Activity on '$1'" sound name "Submarine"'
+        curr=$code
+    fi
+
+    sleep 2;
+
+done

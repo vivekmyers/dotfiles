@@ -2,8 +2,13 @@
 
 
 CONTENT=$(cat "$1")
-STRIP=$(echo "$CONTENT" | vim -Es +'/^----*$/norm dgg' +'?^----*$?norm dd' +'%p' +q! /dev/stdin)
+STRIP=$(echo "$CONTENT" | vim -Es +'/^----*$/norm dgg' +G +'?^----*$?norm dG' +'%p' +q! /dev/stdin)
 DATE="$(date -jf '%Y-%m-%d.md' "$1" +'%Y-%m-%d')"
+
+if [[ -z "$DATE" ]]; then
+  exit 1
+fi
+
 PREV=$(date -v-1d -jf '%Y-%m-%d' "$DATE" +'%Y-%m-%d')
 NEXT=$(date -v+1d -jf '%Y-%m-%d' "$DATE"  +'%Y-%m-%d')
 LONGDATE=$(date -jf '%Y-%m-%d' "$DATE" +'%A, %B %d')
@@ -27,7 +32,7 @@ $(echo "$DATE" | shortcuts run 'Get Day Events' | uniq)
 
 > [!todo]
 >\`\`\`tasks
->(done is $DATE) OR (due date is $DATE) OR (due before $DATE AND not done)
+>(done is $DATE) OR (due date is $DATE) OR ((due before $DATE) AND (not done))
 >\`\`\`
 
 --------

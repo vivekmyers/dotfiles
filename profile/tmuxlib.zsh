@@ -1,4 +1,7 @@
 function tx {
+    if [ -z $1 ]; then
+        1="$(basename $PWD)"
+    fi
     tmux attach -t $1 || tmux new -s $1
 }
 
@@ -23,12 +26,21 @@ function tnew {
 }
 
 function trun {
-    tmux new -s $1 -d "$@"
+    local name="$1"
+    shift
+    tmux new-session -d -s "$name" && tmux send-keys -t "$name" "$*" C-m
+}
+
+function tkrun {
+    local name="$1"
+    shift
+    tmux kill-session -t "$name" 2>/dev/null
+    trun "$name" "$@"
 }
 
 function _tinf {
     pid=$(tmux list-panes -t $1 -F "#{pane_pid}")
-    child=$(pgrep -P "$pid")
+    child=$(pgrep -P "$pid" | head -n1)
     echo -n "$1" ':'
     if [[ -n "$child" ]]; then
         echo -n "$child" ':'
@@ -49,8 +61,7 @@ function tinf {
 
 function tkx {
     if [ -z $1 ]; then
-        echo "No session specified"
-        return 1
+        1="$(basename $PWD)"
     fi
     tmux kill-session -t $1 &&
     tmux new -s $1
@@ -63,3 +74,4 @@ function ta {
         tmux attach -t $1
     fi
 }
+

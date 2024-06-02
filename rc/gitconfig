@@ -1,22 +1,28 @@
-# XXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXX
-# XXXXXX
-# XXXXXXXXXXXXXXX
-# XXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXX
-# XXXXXXXXXXXXXXXXX
-# XXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXX
+[user]
+	email = vivek.myers@gmail.com
+	name = Vivek Myers
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[pull]
+	rebase = false
+[init]
+	defaultBranch = master
+[push]
+	default = simple
+[core]
+	precomposeunicode = false
+[credential]
+	helper = store
+[http]
+	postBuffer = 157286400
+[log]
+	date = local

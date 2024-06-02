@@ -16,7 +16,11 @@ function loop {
 
 function main {
     test -n "$PARTITION" && local args=( -p $PARTITION )
-    SQUEUE_FORMAT2="JobID:.8 ,Name:.40 ,QOS:.15 ,UserName:.8 ,StateCompact:.2 ,TimeUsed:.12 ,NodeList:.20 ,Tres:.40 ,Reason" squeue "${args[@]}" | awk '
+    tcol=$(($(tput cols)-110))
+    if test $tcol -gt 60; then
+        tcol=60
+    fi
+    SQUEUE_FORMAT2="JobID:8 ,Name:20 ,QOS:15 ,UserName:8 ,StateCompact:2 ,TimeUsed:12 ,NodeList:20 ,Tres:$tcol ,Reason:20" squeue "${args[@]}" | awk '
     { counter++ }
     BEGIN { all=0; highp=0; lowp=0; total=0; found=0; counter=0; size='$(tput lines)' }
     $4=="'$USER'" { if ( $3 != "'$LOWPRIORITY'" ) { highp++ } else { lowp++ }; all++ }

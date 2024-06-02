@@ -1,3 +1,5 @@
 export ZSH=$HOME/.omz
 fpath+=($ZSH/functions)
 autoload -Uz $(basename -a $ZSH/functions/*) ""
+
+load env

@@ -1,8 +1,10 @@
+#!/bin/bash
+
 tmp=$(git status --porcelain | awk '
-    $1=="M" { mod[m++]= $2 }
-    $1=="R" { mod[m++]= $2 }
-    $1=="A" { add[a++]= $2 }
-    $1=="D" { del[d++]= $2 }
+    $1 ~ "M" { mod[m++] = $2 }
+    $1 ~ "R" { mod[m++] = $2 }
+    $1 ~ "A" { add[a++] = $2 }
+    $1 ~ "D" { del[d++] = $2 }
     END {
         if (a>1) {
             printf "Added: "
@@ -39,4 +41,5 @@ tmp=$(git status --porcelain | awk '
         }
     }
 ' | sed 's/;[^;]*$//')
-test -n "$tmp" && git commit -am "$tmp"
+test -n "$tmp" && echo -n "$tmp" 
+

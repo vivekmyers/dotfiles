@@ -1,24 +1,84 @@
-nnoremap ,, :w <CR>
-nnoremap <C-S> :w <CR>
-inoremap <C-S> <C-O>:w<CR>
-nnoremap <C-S><C-D> :w\|mksession! $VIMSESSION<CR>:qa<CR>
-inoremap <C-S><C-D> :w\|mksession! $VIMSESSION<CR>:qa<CR>
-noremap <C-E> :cclose\|lclose\|noh<CR>
-noremap <C-N><C-N> :e ~/.vimrc<CR>
-noremap <C-N><C-S> :e ~/.vim/UltiSnips/tex.snippets<CR>
-noremap <C-P> @:<CR>
-set autowrite
-noremap <C-M><C-M> :w\|:make<space><up>
-noremap <C-N><C-M> <Cmd>e makefile<CR>
-nnoremap ;; <Cmd>w\|mksession! $VIMSESSION<CR>
-nnoremap <C-Q> <Cmd>Explore<CR>
-nmap <Leader>/ <Cmd>bd<CR>
-nmap <Leader>p <Cmd>w\|vert term ++close ipython --no-confirm-exit --pylab -i %<CR>
+" writing
+nnoremap <C-S> <cmd>w<cr>
+nnoremap <C-S><C-A> <cmd>wall<cr>
+inoremap <C-S> <C-O><cmd>w<cr>
+nnoremap <C-S><C-S> <cmd>w<cr><cmd>call utils#savesession()<cr>
+imap <C-S><C-S> <C-O><C-S><C-S>
+nnoremap <C-S><C-F> <cmd>call utils#forcewrite()<cr>
+inoremap <C-S><C-O> <cmd>w<cr>
+nnoremap <C-S><C-D> <cmd>wa<cr><cmd>call utils#savesession()<cr><cmd>qa<cr>
+nnoremap <C-S><C-L> <cmd>call utils#loadsession()<cr>
+nmap ,, <cmd>w<cr>
 
-nmap ,n :NERDTreeFind<CR>
-nmap ,m :NERDTreeToggle<CR>
+" window management
+nnoremap <C-D> <cmd>call utils#closenext()<cr>
+inoremap <C-D> <C-O><cmd>call utils#closenext()<cr>
+nnoremap <C-S><C-Q> <cmd>qa<cr>
+nmap <C-S>/ <cmd>bd<cr>
+imap <C-S>/ <C-O><cmd>bd<cr>
+nmap <C-S><C-R> <cmd>call utils#reload()<cr>
+map <F2> <C-S>/
+imap <F2> <C-S>/
+map <leader><F2> <C-S>\
+map <leader>so :w<cr>:source %<cr>
+map + <C-W>+
+
+" shortcuts
+noremap <C-E> <cmd>cclose\|lclose\|noh\|echo ""<cr>
+noremap <C-P> @:<cr>
+nnoremap gp `[v`]
+noremap ; :
+noremap "" "*
+vnoremap * y/\V<C-R>=substitute(escape(@@,"/\\"),"\n","\\\\n","ge")<CR><CR>
+vnoremap # y?\V<C-R>=substitute(escape(@@,"?\\"),"\n","\\\\n","ge")<CR><CR>
+
+" edit configs
+noremap <C-N><C-N> <cmd>e $CONFIGDIR/rc/vimrc<cr>
+noremap <C-N><C-G> <cmd>e $CONFIGDIR/rc/gvimrc<cr>
+noremap <C-N><C-G> <cmd>e $CONFIGDIR/rc/vim/autoload/plugins.vim<cr>
+noremap <C-N><C-F> <cmd>call utils#fileconf()<cr>
+noremap <C-N><C-A> <cmd>call utils#autoconf()<cr>
+noremap <C-N><C-S> <cmd>call utils#snipconf()<cr>
+noremap <C-N><C-M> <cmd>e makefile<cr>
+noremap <C-N><C-P> <cmd>e $CONFIGDIR/rc/vim/autoload/plugins.vim<cr>
+nnoremap <C-N><C-L> <cmd>call utils#localconf()<cr>
+nnoremap goo <cmd>call utils#gotosymlink()<cr>
+
+" run commands
+noremap ms <cmd>w<cr>:!<up>
+noremap M <cmd>wall<cr>:Make<space><up>
+nnoremap <space><space> :Dispatch<space>
+nnoremap <space><leader> :AbortDispatch<cr>
+
+nnoremap <leader>cd <cmd>cd %:p:h\|pwd<cr>
+nnoremap <leader>cs <cmd>Copilot status<cr>
+nmap <F1> <cmd>copen<cr>
+nnoremap <leader>kc <cmd>!pkill -f ctags<cr>
+
+" file navigation
+nnoremap ,e <cmd>Explore<cr>
+nnoremap ,r :RemoteExplore <up>
+command! -nargs=* RemoteExplore call utils#remote(<f-args>)
+
+" command! -nargs=* SearchFiles call utils#searchfiles(<f-args>)
+" command! -nargs=* FindFiles call utils#findfiles(<f-args>)
+" nnoremap <F12> :SearchFiles<space>
+" nnoremap <F11> :FindFiles<space>
+
+nmap ,f <cmd>!open %:h<cr>
+nmap ,n <cmd>NERDTreeFind<cr>
+nmap ,m <cmd>NERDTreeToggle<cr>
+let g:netrw_list_hide = '\(^\|\s\s\)\zs\.\S\+'
 set maxmempattern=5000
+let g:startdir = getcwd()
 
+set autoread
+set autowrite
+set hidden
+set exrc
+
+nmap <leader>z <cmd>call zotero#openref()<cr>
+nmap <leader>Z <cmd>call zotero#copyref()<cr>
 
 syntax enable
 set tabstop=4
@@ -27,168 +87,17 @@ set expandtab
 set mouse=a
 filetype plugin on
 filetype indent on
+set completeopt=longest,menuone,noinsert
 
-inoremap <expr> <CR> getline('.') =~ '\item $' ? '<c-w><c-w>' : '<CR>'
+" inoremap <expr> <cr> getline('.') =~ '\item $' ? '<c-w><c-w>' : '<cr>'
 
-
-function! NextQuit()
-    execute 'try | n | catch | try | wq | catch | try | q | catch | endtry | endtry | endtry'
-endfunction
-
-nnoremap <C-D> :call NextQuit()<CR>
-inoremap <C-D> <C-O>:call NextQuit()<CR>
-nnoremap <C-S><C-Q> <Cmd>qa<CR>
-
-
-if has("nvim")
-    if empty(glob('~/.config/nvim/autoload/plug.vim'))
-        silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
-                    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-        autocmd VimEnter * call PlugInstall
-    endif
-else
-    if empty(glob('~/.vim/autoload/plug.vim'))
-        silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
-                    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    endif
-endif
-
-if has('nvim')
-    call plug#begin('~/.config/nvim/plug.vim')
-else
-    call plug#begin('~/.vim/plug.vim')
-endif
-
-
-Plug 'junegunn/vim-plug'
-    nnoremap <Leader>pi :PlugInstall<CR>
-
-Plug 'tpope/vim-surround'
-Plug 'tpope/vim-rhubarb'
-Plug 'tpope/vim-fugitive'
-    nnoremap <Leader>g :G<space>
-    nnoremap <Leader>s :vert G<CR>
-
-Plug 'tpope/vim-unimpaired'
-Plug 'tpope/vim-commentary'
-Plug 'tpope/vim-repeat'
-Plug 'tpope/vim-sensible'
-Plug 'tpope/vim-vinegar'
-
-Plug 'scrooloose/nerdtree'
-Plug 'rafi/awesome-vim-colorschemes'
-
-Plug 'easymotion/vim-easymotion'
-    let g:EasyMotion_smartcase = 1
-    let g:EasyMotion_do_mapping = 0
-    map <Leader>j <Plug>(easymotion-j)
-    map <Leader>k <Plug>(easymotion-k)
-    map  <Leader>f <Plug>(easymotion-bd-f)
-    nmap <Leader>f <Plug>(easymotion-overwin-f)
-    nmap s <Plug>(easymotion-overwin-f2)
-    map <Leader>l <Plug>(easymotion-bd-jk)
-    nmap <Leader>l <Plug>(easymotion-overwin-line)
-    map  <Leader>w <Plug>(easymotion-bd-w)
-    nmap <Leader>w <Plug>(easymotion-overwin-w)
-    map  <Leader>e <Plug>(easymotion-bd-e)
-    nmap <Leader>e <Plug>(easymotion-overwin-e)
-
-Plug 'junegunn/vim-easy-align'
-    xmap ga <Plug>(EasyAlign)
-    nmap ga <Plug>(EasyAlign)
-
-Plug 'davidhalter/jedi-vim'
-    let g:jedi#goto_stubs_command = ""
-    let g:jedi#goto_assignments_command = ""
-
-
-Plug 'gioele/vim-autoswap'
-    let g:autoswap_detect_tmux = 1
-
-
-Plug 'lervag/vimtex'
-    let g:tex_flavor='latex'
-    let g:vimtex_quickfix_mode=0
-    if has('unix')
-        if has('mac')
-            let g:vimtex_view_method = "skim"
-            let g:vimtex_view_general_viewer
-                    \ = '/Applications/Skim.app/Contents/SharedSupport/displayline'
-            let g:vimtex_view_general_options = '-r @line @pdf @tex'
-            let g:vimtex_view_sync_method = "skim"
-        else
-            let g:latex_view_general_viewer = "zathura"
-            let g:vimtex_view_method = "zathura"
-        endif
-    elseif has('win32')
-    endif
-    let g:vimtex_quickfix_open_on_warning = 0
-    let g:vimtex_quickfix_mode = 2
-    if has('nvim')
-        let g:vimtex_compiler_progname = 'nvr'
-    endif
-    let g:tex_conceal = ""
-
-Plug 'sirver/ultisnips'
-    let g:UltiSnipsExpandTrigger = '<tab>'
-    let g:UltiSnipsJumpForwardTrigger = '<tab>'
-    let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
-
-Plug 'honza/vim-snippets'
-
-Plug 'KeitaNakamura/tex-conceal.vim'
-    set conceallevel=1
-    let g:tex_conceal='abdmg'
-    hi Conceal ctermbg=none
-
-Plug 'psf/black', { 'branch': 'stable' }
-
-Plug 'haya14busa/vim-easyoperator-phrase'
-Plug 'haya14busa/vim-easyoperator-line'
-
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-    let g:airline_theme='violet'
-    let g:airline_solarized_bg='dark'
-    let g:airline_powerline_fonts = 1
-    let g:airline#extensions#tabline#enabled = 1
-    let g:airline#extensions#tabline#formatter = 'unique_tail'
-
-
-Plug 'yegappan/mru'
-    nmap <Leader>o :MRU<CR>
-    nmap <Leader><Leader>o :MRU 
-
-Plug 'dense-analysis/ale'
-    let g:ale_linters = {
-                \   'python': ['pylint'],
-                \   'tex': ['chktex'],
-                \}
-    let g:ale_fixers = {
-                \   'python': ['black', 'autoimport', 'remove_trailing_lines', 'trim_whitespace', 'autoflake'],
-                \   'tex': ['latexindent'],
-                \}
-    let g:ale_python_flake8_options = '--max-line-length=88'
-    let g:ale_python_pylint_options = '--disable=C,R,F'
-    nmap <Leader>; :ALEToggle<CR>
-    nmap <C-K> :ALEFix<CR>
-    nmap <silent> <Leader>, <Plug>(ale_previous_wrap)
-    nmap <silent> <Leader>. <Plug>(ale_next_wrap)
-
-
-Plug 'altercation/vim-colors-solarized'
-
-Plug 'github/copilot.vim'
-    imap <C-A> <Plug>(copilot-accept-word)
-    imap <C-\> <Plug>(copilot-suggest)
-
-
-call plug#end() 
+" load plugins
+source ~/.vim/autoload/plugins.vim
 
 set background=dark
 try
     colorscheme solarized
-    catch 
+    catch
 endtry
 
 set autowrite
@@ -199,17 +108,48 @@ set spelllang=en_us
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
 set hlsearch
 
+nmap <leader>r <cmd>call utils#reload()<cr>
 
-autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+augroup vimrc
+    autocmd!
+    autocmd BufWinEnter quickfix nnoremap <buffer> + <C-W>+<C-W>+
+    autocmd DirChanged * call utils#newdir()
+    autocmd BufRead,BufNewFile $HOME/**/papers/** call tex#overleaf()
+    autocmd BufReadPre *.ipynb call python#pythonsetup()
 
-nmap <Leader>r :source $MYVIMRC<CR>
 
-augroup vimrc   
-    autocmd! BufWritePost $MYVIMRC source % | echom "Reloaded " . $MYVIMRC | redraw
-    autocmd! BufWritePost $MYGVIMRC if has('gui_running') | so % | echom "Reloaded " . $MYGVIMRC | endif | redraw
+    autocmd BufEnter,BufWinEnter,WinEnter imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
 augroup END
 
 set guifont=Meslo\ LG\ S\ Regular\ for\ Powerline:h13
 
+packadd cfilter
+noh
+
+set wildignore+=*/node_modules/*
+set wildignore+=*/wandb/*
+set wildignore+=*/wandb
+
+let g:terminal_ansi_colors = [
+  \'#262626', 
+  \'#d70000', 
+  \'#5f8700', 
+  \'#af8700', 
+  \'#0087ff', 
+  \'#af005f', 
+  \'#00afaf', 
+  \'#d7d7af', 
+  \'#1c1c1c', 
+  \'#d75f00', 
+  \'#4e4e4e', 
+  \'#585858', 
+  \'#808080', 
+  \'#5f5faf',
+  \'#8a8a8a',
+  \'#ffffd7' ]
+highlight Terminal guibg='#002b36'
+highlight Terminal guifg='#93a1a1'
 
 
+tnoremap <C-Left> <C-W>:bprev<CR>
+tnoremap <C-Right> <C-W>:bnext<CR>

@@ -37,10 +37,10 @@ function rmhome {
 }
 
 function echohome {
-    [[ -f ~/.local/etc/autohome ]] && cat ~/.autohome
+    [[ -f ~/.local/etc/autohome ]] && cat ~/.local/etc/autohome
 }
 
-if [[ -f ~/.local/etc/autohome ]]; then
+if [[ -f ~/.local/etc/autohome ]] && [[ -z "$LOADED" ]]; then
     cd $(cat ~/.local/etc/autohome)
 fi
 

@@ -10,6 +10,11 @@ alias topu="top -u"
 alias xcode='open -a Xcode'
 alias ovim="vim +'norm!"'`0'"'"
 
+if command -v with-readline > /dev/null; then
+    alias rlwrap=with-readline
+    alias sftp='rlwrap sftp'
+fi
+
 alias apps='cd /Applications'
 alias docs='cd ~/Documents'
 alias res='cd ~/Documents/Research'
@@ -19,9 +24,9 @@ alias less="less -r"
 
 alias gvim="test -e .git && vim +'G' +'norm!o'"
 alias otp='sshpass -p $(google_auth.py)'
+alias ladog='git log --all --decorate --oneline --graph'
 
 alias monero=monero-wallet-cli
 
 bindkey -s "^Q" '^Acd ^M'
-bindkey -s "^V" '^Uvim^M'
-bindkey -s "^[" '^Ucd -^M'
+bindkey -s "^V" '^Usvim^M'

@@ -1,0 +1,4 @@
+#!/bin/zsh
+
+/usr/local/bin/auth &!
+pkill -9 Terminal

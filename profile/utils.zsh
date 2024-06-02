@@ -3,7 +3,7 @@ function trash {
     mkdir -p ~/.trash
     for x in "$@"; do
         y="$x"
-        while [[ -f ~/.Trash/$x ]] || [[ -d ~/.Trash/$x ]]; do
+        while [[ -f ~/.trash/$x ]] || [[ -d ~/.trash/$x ]]; do
             ext="-new"
             if [[ ${x%%.*} = $x ]]; then
                 x="$x$ext"
@@ -11,7 +11,7 @@ function trash {
                 x="${x%%.*}${ext}.${x##*.}"
             fi
         done
-        args="'${y}' ~/.Trash/'$(basename "$x")'"
+        args="'${y}' ~/.trash/'$(basename "$x")'"
         echo "mv $args" | bash
     done
 }
@@ -20,7 +20,6 @@ function edit {
     local file="$(which $@ 2>/dev/null)"
     test -f "$file" && $EDITOR +'set ft=bash' "$file"
 }
-
 
 function ml {
     mv -t "$2" "$1" &&
@@ -32,9 +31,15 @@ function setup {
     local sock="$HOME/.ssh/sockets/setup:%r@%h:%p"
     commit_config &&
     ssh -nNfM -S "$sock" "$1" &&
-    rsync -e "ssh -S $sock" -Oavz --delete --exclude ".git" --exclude cache ~/config/ "$1:~/config/" &&
+    ( ssh -S "$sock" "$1" "zsh -lic conf" || true ) &&
+    rsync -e "ssh -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/" &&
     ssh -S "$sock" "$1" "cd ~/config && make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")" &&
     ssh -O exit -S "$sock" "$1"
+}
+
+function setup_tpu {
+    commit_config &&
+    ssh "$1" -- "cd /nfs/nfs1/users/vmyers/config && sudo chown -R vivek . && git pull && make ${2-all} CONDA_PREFIX=/nfs/nfs1/users/vmyers/conda" &&
 }
 
 function copy_setup {
@@ -82,12 +87,13 @@ function install_conda {
 }
 
 function commit_config {
-    find $CONFIGDIR -type f -name "*.sw[klmnop]" -delete -print | xargs -n1 -I{} echo "Deleted: {}"
-    find $CONFIGDIR -name .DS_Store -delete -print | xargs -n1 -I{} echo "Deleted: {}"
+    find $CONFIGDIR -type f -name ".session.vim" -delete -print | xargs -I{} echo "Deleted: {}"
+    find $CONFIGDIR -type f -name "*.sw[klmnop]" -delete -print | xargs -I{} echo "Deleted: {}"
+    find $CONFIGDIR -name .DS_Store -delete -print | xargs -I{} echo "Deleted: {}"
     find $CONFIGDIR -name .git | while read line; do
         zsh -c "load utils; cd "$(dirname $line)" && git add . && acom"
     done
-    zsh -c 'cd $CONFIGDIR && make'
+    zsh -c 'cd $CONFIGDIR && git pull && git push && make'
 }
 
 function dl {
@@ -193,7 +199,7 @@ function znew {
 
     [[ -f "$target" ]] &&
     commit_config "$1" &&
-    unset -f "$1" &&
+    { ! command -v "$1" || unset -f "$1" ; } &&
     autoload -Uz "$1" &&
     rehash 
 }
@@ -229,7 +235,7 @@ function libnew {
 }
 
 function deswap {
-    find "${1-$PWD}" -maxdepth 1 -type f -name "*.sw[klmnop]" -print -delete
+    find "${1-$PWD}" -type f -name "*.sw[klmnop]" -print -delete
 }
 
 function terms {
@@ -250,3 +256,6 @@ function asrm {
     done 
 }
 
+function publish_dotfiles {
+    rsync -avz ~/config/ ~/dotfiles/ --exclude private --exclude .git --delete
+}

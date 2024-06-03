@@ -31,7 +31,7 @@ function setup {
     local sock="$HOME/.ssh/sockets/setup:%r@%h:%p"
     commit_config &&
     ssh -nNfM -S "$sock" "$1" &&
-    ( ssh -S "$sock" "$1" "zsh -lic conf" || true ) &&
+    ( ssh -S "$sock" "$1" "cd ~/config && make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")" || true ) &&
     rsync -e "ssh -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/" &&
     ssh -S "$sock" "$1" "cd ~/config && make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")" &&
     ssh -O exit -S "$sock" "$1"

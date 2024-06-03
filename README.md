@@ -4,11 +4,12 @@ To install, run `make`. This will create symlinks at the appropriate locations f
 
 Credentials should be placed at the following locations (see makefile for usage):
 ```
-private/bin
-private/git-credentials
-private/github-copilot
-private/netrc
-private/profile
 private/secrets.json
-private/ssh
+private/github-copilot/hosts.json
+private/ssh/config
+private/ssh/id_rsa
+private/ssh/id_rsa.pub
+private/profile/keys.zsh
+private/git-credentials
+private/netrc
 ```

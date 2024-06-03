@@ -103,7 +103,7 @@ $(CONDABIN)/zsh: $(CONDA) | $(BIN)
 	$(CONDA) install -y zsh --force-reinstall
 
 $(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub $(HOME)/.ssh/config:
-	cp -n private/ssh/$(notdir $@) $@ || touch $@
+	cp -n $(CURDIR)/private/ssh/$(notdir $@) $@ || touch $@
 
 $(HOME)/.netrc:
 	$(LN) $(CURDIR)/private/netrc $@
@@ -112,7 +112,7 @@ $(HOME)/.git-credentials:
 	$(LN) $(CURDIR)/private/git-credentials $@
 
 $(HOME)/.config/github-copilot/hosts.json: | $(HOME)/.config/github-copilot
-	$(LN) private/github-copilot/hosts.json 
+	$(LN) $(CURDIR)/private/github-copilot/hosts.json $@
 
 conda: $(CONDA) $(HOME)/conda $(TOOLS) ;
 

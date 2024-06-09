@@ -20,6 +20,7 @@
 	default = simple
 [core]
 	precomposeunicode = false
+	fileMode = false
 [credential]
 	helper = store
 [http]

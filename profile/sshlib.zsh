@@ -56,7 +56,7 @@ set timeout 15
 log_user 0
 set cmd [lrange $argv 0 end]
 if { [catch { system {test -t 0} } error] } {
-    spawn sh -c "cat | $cmd"
+    eval spawn shnotty $cmd
     set piped 1
     set timeout 5
 } else {
@@ -111,7 +111,7 @@ if { $piped } {
     }
     send "\004"
     expect eof
-    send_user -- "$expect_out(buffer)"
+    catch { send_user -- "$expect_out(buffer)" } error
 } else {
     catch { interact } error
 }

@@ -21,7 +21,7 @@ map <F2> <C-S>/
 imap <F2> <C-S>/
 map <leader><F2> <C-S>\
 map <leader>so :w<cr>:source %<cr>
-map + <C-W>+
+map + <C-W>+<C-W>>
 
 " shortcuts
 noremap <C-E> <cmd>cclose\|lclose\|noh\|echo ""<cr>
@@ -151,5 +151,14 @@ highlight Terminal guibg='#002b36'
 highlight Terminal guifg='#93a1a1'
 
 
+tnoremap <esc><esc> <C-W>:bfirst<CR>
 tnoremap <C-Left> <C-W>:bprev<CR>
 tnoremap <C-Right> <C-W>:bnext<CR>
+tnoremap <F1> <C-W>N
+
+
+set diffopt+=vertical
+nnoremap <C-L> <C-L><cmd>AirlineRefresh<cr><cmd>call utils#refreshcomplete()<cr>
+
+
+

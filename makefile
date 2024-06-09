@@ -11,14 +11,16 @@ LN = ln -sf
 
 CONDA_CLI = vim conda-minify black pipx flake8 mypy pylint isort \
 			pipdeptree pipreqs autopep8 openai jupyter tmux curl git \
-			ipython
+			ipython jq
 CONDA_PKG = nodejs imagemagick magic-wormhole jedi
 PIP_CLI = imgcat autoimport arxiv_latex_cleaner
 EXTRA_CLI = wormhole node
 
 ifeq ($(shell uname),Linux)
+ifneq ($(shell hostname),phosphate)
 	CONDA_PKG += universal-ctags
 	EXTRA_CLI += ctags
+endif
 endif
 
 BIN_CLI = $(shell ls bin)
@@ -30,6 +32,7 @@ FDIR = $(ZSH)/functions
 BIN = $(HOME)/.local/bin
 SSH = $(HOME)/.ssh/config $(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub
 FUNCTIONS = $(addprefix $(FDIR)/,$(shell basename -s .zsh functions/*.zsh))
+VAR = $(HOME)/.local/var
 
 PIPTARGETS = $(addprefix $(BIN)/,$(PIP_CLI))
 CONDATARGETS = $(addprefix $(CONDABIN)/,$(CONDA_CLI))
@@ -47,7 +50,7 @@ all: conda rc shell ssh mujoco ;
 
 rc: $(RCTARGETS) $(RCEXTRA) ;
 
-shell: zsh omz profile $(EXTRA)/conda_hook.zsh ;
+shell: zsh omz profile $(EXTRA)/conda_hook.zsh $(VAR) ;
 
 zsh: $(BIN)/zsh $(HOME)/.zshrc ;
 
@@ -102,8 +105,13 @@ endif
 $(CONDABIN)/zsh: $(CONDA) | $(BIN)
 	$(CONDA) install -y zsh --force-reinstall
 
-$(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub $(HOME)/.ssh/config:
+$(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub: | $(HOME)/.ssh
 	cp -n $(CURDIR)/private/ssh/$(notdir $@) $@ || touch $@
+	chmod 600 $@
+
+$(HOME)/.ssh/config: | $(HOME)/.ssh
+	$(LN) $(CURDIR)/private/ssh/config $@
+	chmod 600 $@
 
 $(HOME)/.netrc:
 	$(LN) $(CURDIR)/private/netrc $@
@@ -184,7 +192,8 @@ $(CONDATARGETS): $(CONDA)
 
 .SECONDARY: $(EXTRA)/environment.yml $(addprefix $(CONDABIN)/,$(EXTRA_CLI)) $(addprefix $(BIN)/,$(EXTRA_CLI))
 
-$(CONDABIN)/%: $(EXTRA)/environment.yml ;
+$(CONDABIN)/%: $(EXTRA)/environment.yml
+	$(shell test -x $@ || echo $(CONDA) install -y $(notdir $@))
 
 $(CONDABIN)/wormhole: $(CONDA)
 	$(CONDA) install -y magic-wormhole
@@ -210,7 +219,7 @@ $(EXTRA)/environment.yml: $(CONDA) | $(EXTRA)
 $(EXTRA)/secrets.json: private/secrets.json | $(EXTRA)
 	cp $< $@
 
-DIRS = $(EXTRA) $(BIN) $(FDIR)
+DIRS = $(EXTRA) $(BIN) $(FDIR) $(VAR)
 $(DIRS):
 	mkdir -p $@
 
@@ -227,21 +236,26 @@ init: $(ZSH)/custom/init.zsh ;
 
 omz: $(ZSH) $(addprefix $(ZSH)/custom/plugins/,conda-zsh-completion zsh-autosuggestions zsh_codex zsh-syntax-highlighting) ;
 
-$(ZSH):
+$(ZSH): $(CONDABIN)/ssh
+	rm -rf $@
 	git clone https://github.com/vivekmyers/ohmyzsh.git $@
 
 $(ZSH)/custom/%: $(ZSH) | $(ZSH)/custom/plugins
 
 $(ZSH)/custom/plugins/conda-zsh-completion:
+	rm -rf $@
 	git clone https://github.com/conda-incubator/conda-zsh-completion $@
 
 $(ZSH)/custom/plugins/zsh-autosuggestions:
+	rm -rf $@
 	git clone https://github.com/zsh-users/zsh-autosuggestions $@
 
 $(ZSH)/custom/plugins/zsh_codex:
+	rm -rf $@
 	git clone https://github.com/tom-doerr/zsh_codex.git $@
 
 $(ZSH)/custom/plugins/zsh-syntax-highlighting:
+	rm -rf $@
 	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $@
 
 $(ZSH)/custom/plugins:

@@ -286,6 +286,22 @@ endsnippet
 
 priority 1000
 context "math()"
+snippet '^.*\}//' "{} frac" wrA
+`!p
+stripped = match.string[:-2]
+depth = 0
+i = len(stripped) - 1
+while True:
+	if stripped[i] == '}': depth += 1
+	if stripped[i] == '{': depth -= 1
+	if depth == 0: break;
+	i-=1
+snip.rv = stripped[0:i] + "\\frac{" + stripped[i+1:-1] + "}"
+`{$1}$0
+endsnippet
+
+priority 1000
+context "math()"
 snippet '^.*\)//' "() frac" wrA
 `!p
 stripped = match.string[:-2]
@@ -674,7 +690,7 @@ endsnippet
 
 context "math()"
 snippet set "set" wA
-\\{$1\\} $0
+\\{${1:${VISUAL}}\\}$0
 endsnippet
 
 snippet || "mid" iA
@@ -796,7 +812,7 @@ endsnippet
 priority 10
 context "math()"
 snippet "bar" "bar" riA
-\overline{$1}$0
+\overline{${1:${VISUAL}}}$0
 endsnippet
 
 priority 100
@@ -808,7 +824,7 @@ endsnippet
 priority 10
 context "math()"
 snippet "(?<!w)hat" "hat" riA
-\hat{$1}$0
+\hat{${1:${VISUAL}}}$0
 endsnippet
 
 priority 100

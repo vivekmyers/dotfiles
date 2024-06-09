@@ -63,7 +63,7 @@ function tkx {
     if [ -z $1 ]; then
         1="$(basename $PWD)"
     fi
-    tmux kill-session -t $1 &&
+    ( tmux kill-session -t $1 ) 2>/dev/null
     tmux new -s $1
 }
 

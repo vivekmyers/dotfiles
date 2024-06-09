@@ -4,7 +4,7 @@ function utils#reload()
     redraw
     echom "Reloaded " . $MYVIMRC
     filetype detect
-    imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
+    call utils#refreshcomplete()
     doautoall FileType
     doautoall BufRead
     doautoall BufEnter
@@ -28,13 +28,17 @@ function utils#savesession()
     endif
 endfunction
 
+function utils#refreshcomplete()
+    imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
+endfunction
+
 
 function utils#loadsession()
     let l:sess = getcwd() . "/" . $VIMSESSION
     silent! source $VIMSESSION
     echom "Session loaded from " . l:sess
     AirlineRefresh
-    imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
+    call utils#refreshcomplete()
 endfunction
 
 

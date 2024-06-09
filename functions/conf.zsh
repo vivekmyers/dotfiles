@@ -11,7 +11,7 @@ function editor {
 }
 
 function endconf {
-    commit_config "$1" &&
+    ( commit_config "$1" & ) > ~/.local/var/commit_config.log 2>&1
     test -z "$CONFCONT" && reprof;
 }
 

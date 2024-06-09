@@ -1,14 +1,31 @@
 
+let g:tex_comment_regex = '\(^[[:space:]]*\)\@<=\(%%\|    \)[[:space:]]*[A-Z][A-Z]\(\.[0-9]*\)*\|\\todo\>\|\<TODO\>'
+let g:tex_comment_people =<< trim END
+    vivek
+    adnote
+    kuan
+    anca
+    sergey
+    ben
+    billz
+    dorsa
+END
+
+let g:comment_regex = g:tex_comment_regex
+for person in g:tex_comment_people
+    let g:comment_regex = g:comment_regex . '\|\\' . person . '\>'
+endfor
+let g:comment_regex = '\(^[^%]*\)\@<=\(' . g:comment_regex . '\)'
+
+
 function tex#comments(filter = '')
-    let l:prg =<< trim END
-        git grep -nI 
-        '^\([^%]*%%\)\?[[:space:]]*[A-Z][A-Z]\(\.[0-9]*\)*:\|^[^%]*\\todo.*$\|\<TODO\>\|\\adnote'
-        | grep -v '\[resolved.*\]'
-    END
+    let prg = 'git grep -nI '
+        \ . shellescape(substitute(g:comment_regex, '\\@<=', '', 'g'))
+        \ . ' | grep -v ''\[resolved.*\]'''
     if a:filter != ''
-        let l:prg = l:prg + [' | grep ' . shellescape(a:filter)]
+        let l:prg = l:prg . ' | grep ' . shellescape(a:filter)
     endif
-    exe 'Grepper -noprompt -tool git -grepprg ' . join(l:prg, " ")
+    exe 'Grepper -noprompt -tool git -grepprg ' . prg
 endfunction
 
 function tex#togmark()
@@ -27,8 +44,7 @@ function tex#togmark()
 endfunction
 
 function tex#togresolve()
-    call cursor(0, 1)
-    if search('resolved', 'c', line('.')) == line('.')
+    if search('\[resolved.*\]', 'c', line('.')) == line('.')
         call tex#unresolve()
     else
         call tex#resolve()
@@ -36,30 +52,35 @@ function tex#togresolve()
 endfunction
 
 function tex#nextcomment()
-    call cursor(0, 1)
-    call search('^[^%]*%%[A-Z][A-Z]\(\.[0-9]*\)*:', '')
+    call search(g:comment_regex, 'W')
+    while getline('.') =~ '\[resolved.*\]'
+        call search(g:comment_regex, 'W')
+    endwhile
 endfunction
 
 function tex#prevcomment()
-    call cursor(0, 1)
-    call search('^[^%]*%%[A-Z][A-Z]\(\.[0-9]*\)*:', 'b')
+    call search(g:comment_regex, 'bW')
+    while getline('.') =~ '\[resolved.*\]'
+        call search(g:comment_regex, 'bW')
+    endwhile
 endfunction
 
 function tex#resolve()
     let l:line = line('.')
-    call cursor(0, 1)
-    let l:match = search('^[^%]*%%[A-Z][A-Z]\(\.[0-9]*\)*:', 'c', l:line)
-    if l:match == l:line
-        execute "normal! f:i[resolved: ".tex#stamp()."]"
+    let l:mark = "[resolved: ".tex#stamp()."]"
+    let l:match = matchstr(getline('.'), g:comment_regex)
+    if l:match !~ '%'
+        execute 'substitute/'.g:comment_regex.'/%&'.l:mark.'/'
+    else
+        execute 'substitute/'.g:comment_regex.'/&'.l:mark.'/'
     endif
 endfunction
 
 function tex#unresolve()
     let l:line = line('.')
-    call cursor(0, 1)
-    let l:match = search('resolved', 'c', l:line)
-    if l:match == l:line
-        execute('normal! da[')
+    execute 'substitute/\[resolved.*\]//'
+    if substitute(getline('.'), '%', '', '') =~ g:comment_regex
+        execute 'substitute/%//'
     endif
 endfunction
 
@@ -161,7 +182,7 @@ function tex#resetviewer()
     call system('osascript -e "tell application \"Skim\" to activate"')
 
     call vimtex#compiler#start()
-    call vimtex#view#view()
+    call tex#view()
     " call system('osascript -e "tell application \"Skim\" to quit"')
     let script =<< trim END
         tell application "Image Events"
@@ -240,3 +261,13 @@ function tex#stamp()
     return 'VM.' . systemlist('date +"%-m.%d"')[0]
 endfunction
 
+
+function tex#view()
+    let l:pdf = b:vimtex.viewer.out()
+    call system('pdfinfo ' . l:pdf)
+    if v:shell_error == 0
+        VimtexView
+    else
+        echo 'Invalid PDF file'
+    endif
+endfunction

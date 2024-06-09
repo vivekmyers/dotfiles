@@ -7,7 +7,7 @@ dir="$(dirname "$path")"
 rm -f "$name.pdf"
 osascript ~/.local/bin/keynote_export.applescript "$path" "$dir/$name.pdf" || exit 1
 rm -f "$name"/slide*.pdf
-mkdir "$name"
+mkdir "$name" 2>/dev/null
 pdfseparate $name.pdf "$name/slide%d.pdf"
 for i in "$name"/slide*.pdf; do
     pdfcrop "$i" "$i"

@@ -146,6 +146,8 @@ function python#addimport()
         let cmd = 'from itertools import cycle'
     elseif arg == 'repeat'
         let cmd = 'from itertools import repeat'
+    elseif arg == 'defaultdict'
+        let cmd = 'from collections import defaultdict'
     elseif arg == 'hk'
         let cmd = 'import haiku as hk'
     elseif arg == 'optax'
@@ -278,4 +280,63 @@ function python#ipynb_fold()
         return 0
     endif
     return 1
+endfunction
+
+function python#cell_below()
+    let curpos = getpos('.')
+    let lnum = search('^# \?%%', 'nW')
+    if lnum == 0
+        let lnum = line('$')
+        if getline(lnum) =~ '^# \?%%'
+            call append(lnum, ['', '', '', '# %%'])
+            call cursor(lnum + 2, 1)
+        else
+            call append(lnum, ['', '# %%', '', ''])
+            call cursor(lnum + 4, 1)
+        endif
+    else
+        call append(lnum, ['', '', '', '# %%'])
+        call cursor(lnum + 2, 1)
+    endif
+    startinsert
+endfunction
+
+function python#cell_above()
+    let curpos = getpos('.')
+    let lnum = search('^# \?%%', 'bncW')
+    if lnum == 0
+        let lnum = 1
+        if getline(lnum) =~ '^# \?%%'
+            call append(lnum - 1, ['# %%', '', '', ''])
+            call cursor(lnum + 2, 1)
+        else
+            call append(lnum - 1, ['', '', '# %%', ''])
+            call cursor(lnum, 1)
+        endif
+    else
+        call append(lnum - 1, ['# %%', '', '', ''])
+        call cursor(lnum + 2, 1)
+    endif
+    startinsert
+endfunction
+
+function python#cell_split()
+    call append(line('.'), ['', '# %%', ''])
+    normal 3j
+endfunction
+
+function python#aspy()
+    write
+    let l:base = expand('%:p:r')
+    exe 'edit '.l:base.'.py'
+    exe 'bd '.l:base.'.ipynb'
+    redraw!
+endfunction
+
+function python#asipynb()
+    write
+    let l:base = expand('%:p:r')
+    exe 'edit '.l:base.'.ipynb'
+    exe 'bd '.l:base.'.py'
+    redraw!
 endfunction

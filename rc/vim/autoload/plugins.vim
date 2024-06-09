@@ -42,6 +42,12 @@ Plug 'mbbill/undotree'
 
 Plug 'wellle/targets.vim'
 Plug 'mhinz/vim-grepper'
+    augroup grepper
+        autocmd!
+        autocmd VimEnter * let g:grepper.operator.highlight = 1
+        autocmd VimEnter * let g:grepper.operator.tool = 'git'
+        autocmd VimEnter * let g:grepper.operator.grepprg = 'git grep -niI ''$*'''
+    augroup END
     vmap <F12> <plug>(GrepperOperator)
     nmap <F12> <cmd>Grepper -highlight -tool git -grepprg git grep -niI '$*'<cr>
     nmap <F11> <cmd>Grepper -highlight -tool git -grepprg git ls-files \| grep -i '$*'<cr>
@@ -52,13 +58,13 @@ Plug 'tpope/vim-fugitive'
     nnoremap <leader>g :G
     " nnoremap <leader>s <cmd>vert G<cr>
     " nnoremap <leader>S <cmd>G<cr>
-    nnoremap <space>ac :exe 'Dispatch! git commit -am ' . shellescape(system("autocommit"))<cr>
+    nnoremap <space>ac :call <sid>autocommit()<cr>
     nnoremap <space>ga :Git add %:p<CR><CR>
     nnoremap <space>gs :vert Git<CR>
     nnoremap <space>gc :Git commit -v -q<CR>
     nnoremap <space>gt :Git commit -v -q %:p<CR>
-    nnoremap <space>gd :vert Gdiff<CR>
-    nnoremap <space>gD :vert Gdiff<space>
+    nnoremap <space>gd :Gvdiffsplit<CR>
+    nnoremap <space>gD :Gvdiffsplit<space>
     nnoremap <space>gk :G blame<CR>
     nnoremap <space>ge :Gedit<CR>
     nnoremap <space>gr :Gread<CR>
@@ -76,6 +82,15 @@ Plug 'tpope/vim-fugitive'
     nnoremap <space>gH :0Gclog<CR>
     nnoremap <space>g<space> :G<Space>
     nnoremap <space>v<space> :vert G<Space>
+
+    function! s:autocommit()
+        let msg = system("autocommit")
+        if trim(msg) == ''
+            echom "No changes to commit"
+        else
+            exe 'Dispatch! git commit -am ' . shellescape(msg)
+        endif
+    endfunction
     " autocmd User FugitiveIndex nnoremap <buffer> <leader>p :Git push<cr>
     " autocmd User FugitiveIndex nnoremap <buffer> <leader>u :Git pull<cr>
 
@@ -126,7 +141,9 @@ Plug 'ubaldot/vim-replica'
     nmap <F4> <cmd>silent! ReplicaConsoleShutoff<cr>
     nmap <F9> <cmd>ReplicaSendLines<cr>
     xmap <F9> <cmd>ReplicaSendLines<cr>
+    vmap <F9> :ReplicaSendLines<cr>
     nmap <F5> <cmd>ReplicaSendFile<cr>
+    nmap <F6> <C-W>H<cmd>vert resize +30<cr>
     nmap <c-enter> <cmd>silent! ReplicaSendCell<cr>j
 
 Plug 'goerz/jupytext.vim'
@@ -203,6 +220,7 @@ Plug 'lervag/vimtex'
     let g:vimtex_compiler_latexmk = {
                 \ 'aux_dir': '.build',
                 \ 'options': [
+                \   '-use-make',
                 \   '-shell-escape',
                 \   '-file-line-error',
                 \   '-synctex=1',

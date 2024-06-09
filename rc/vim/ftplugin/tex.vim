@@ -26,12 +26,11 @@ nmap <buffer> <C-S>; <cmd>silent! wall<bar>call vimtex#compiler#start()<cr>
 imap <buffer> <C-S>; <C-O><cmd>silent! wall<bar>call vimtex#compiler#start()<cr>
 nmap <buffer> <C-S>= <cmd>silent! w<cr><cmd>VimtexCompileSS<cr>
 
-nmap <buffer> <C-S>' <cmd>silent! w<cr><plug>(vimtex-view)
-imap <buffer> <C-S>' <C-O><cmd>silent! w<cr><C-O><plug>(vimtex-view)
+nmap <buffer> <C-S>' <cmd>silent! w<cr><cmd>call tex#view()<cr>
+imap <buffer> <C-S>' <cmd>silent! w<cr><C-O><cmd>call tex#view()<cr>
 
 set spell
 set wrap
-match DiffText '\(%.*\)\@<!%%[[:space:]]*[A-Z][A-Z]\(\.[0-9]*\)*:.*$'
 
 nmap <buffer> <leader>d <cmd>call tex#gotodef()<cr>
 nmap <buffer> <leader>D <cmd>call tex#showdef()<cr>
@@ -48,15 +47,21 @@ vmap Sx "sce^{<C-R>s}<esc>
 nmap dsx ds}hhxx
 
 
+augroup tex
+    autocmd!
+    highlight TodoHead term=bold ctermfg=0 ctermbg=12 gui=bold guifg=#d33682 guibg=#073642
+    autocmd BufWinEnter *.tex let b:matchtodorest = matchadd('DiffText', g:comment_regex.'\(.*\[resolved:.*\]\)\@!\zs.*$')
+    autocmd BufWinLeave *.tex silent! call matchdelete(b:matchtodorest)
+    autocmd BufWinEnter *.tex let b:matchtodo = matchadd('TodoHead', g:comment_regex.'\(.*\[resolved:.*\]\)\@!')
+    autocmd BufWinLeave *.tex silent! call matchdelete(b:matchtodo)
+    autocmd BufWinEnter *.tex set conceallevel=0
+augroup END
+
+
 nmap <buffer> tsV <cmd>call tex#vertsub('Vert','\\\|')<cr>
 nmap <buffer> tsv <cmd>call tex#vertsub('vert','\|')<cr>
 nmap <buffer> <C-S><C-K> <cmd>call tex#resetviewer()<cr>
 nmap <buffer> <C-S><C-A> <cmd>call tex#main()<cr>
-
-augroup tex
-    autocmd!
-    autocmd BufEnter *.tex set conceallevel=0
-augroup END
 
 vmap <buffer> Sc <plug>(vimtex-cmd-create)
 

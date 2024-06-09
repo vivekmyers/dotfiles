@@ -28,18 +28,55 @@ function ml {
 }
 
 function setup {
+    if istpu "$1"; then
+        setup_tpu "$1"
+    else
+        setup_base "$1" "$2" "$3"
+    fi
+}
+
+function setup_base {
     local sock="$HOME/.ssh/sockets/setup:%r@%h:%p"
-    commit_config &&
-    ssh -nNfM -S "$sock" "$1" &&
-    ( ssh -S "$sock" "$1" "cd ~/config && make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")" || true ) &&
-    rsync -e "ssh -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/" &&
-    ssh -S "$sock" "$1" "cd ~/config && make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")" &&
-    ssh -O exit -S "$sock" "$1"
+    ( flock -n 9 || { echo "Another setup is already running"; return 1; }
+      ( commit_config >~/.local/var/setup.$1.log 2>&1 & )
+      ssh -nNM -S "$sock" "$1" &
+      ( cmd="cd ~/config && ( git commit -am. || true ) && git pull && git push && flock -n config.lock make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")"
+          ssh -S "$sock" -t "$1" "~/conda/bin/zsh -lc $(printf "%q" $cmd)" || 
+        ( rsync -e "ssh -t -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/" &&
+          ssh -t -S "$sock" "$1" "
+            cd ~/config && 
+            git reset --hard && 
+            git clean -df && 
+            flock -n config.lock make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")"
+        )
+        ssh -t -S "$sock" "$1" "touch ~/. && ~/conda/bin/zsh -lic commit_config"
+      )
+      ssh -O exit -S "$sock" "$1"
+      ( commit_config >>~/.local/var/setup.$1.log 2>&1 & )
+    ) 9>~/.$1.setup.lock
 }
 
 function setup_tpu {
-    commit_config &&
-    ssh "$1" -- "cd /nfs/nfs1/users/vmyers/config && sudo chown -R vivek . && git pull && make ${2-all} CONDA_PREFIX=/nfs/nfs1/users/vmyers/conda" &&
+    ( local sock="$HOME/.ssh/sockets/setup:%r@%h:%p"
+      ssh -nNM -S "$sock" "$1" &
+      local CONDALOC='$HOME/conda'
+      local START=$(ssh -q -S "$sock" "$1" "bash -c 'echo /nfs/nfs*/users'" | head -n1 | tr -d '[:cntrl:]')/$USER
+      # echo "Trying conda at $CONDALOC"
+      # cmd="sudo mkdir -p ${CONDALOC%/*}"
+      # ssh -S "$sock" "$1" "echo \"Running: $cmd\" && $cmd"
+      ( flock -n 9 || { echo "Another setup is already running"; exit 1; }
+      ( commit_config >~/.local/var/setup.$1.log 2>&1 & )
+      ( cmd="cd ~/config && ( git commit -am. || true ) && git pull && git push && flock -n config.lock make all CONDA_PREFIX=$CONDALOC"
+        ssh -S "$sock" -t "$1" "~/conda/bin/zsh -lc $(printf "%q" $cmd)" || (
+        rsync -e "ssh -t -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/" &&
+            ssh -t -S "$sock" "$1" "cd ~/config && flock -n config.lock make all CONDA_PREFIX=$CONDALOC" 
+        )
+        ssh -t -S "$sock" "$1" "cd $CONDALOC/.. && zsh -lic mkhome"
+      )
+      ( commit_config >>~/.local/var/setup.$1.log 2>&1 & )
+      ) 9>~/.$1.setup.lock
+      ssh -O exit -S "$sock" "$1"
+    )
 }
 
 function copy_setup {
@@ -60,14 +97,14 @@ function syncrc {
 }
 
 function reprof {
-    exec env -i $SHELL -l
+    exec $SHELL -l
 }
 
 function install_conda {
-    ( 
+    (
         LOC="${1-$HOME/conda}"
         cd ~
-        test -n "$overwrite" && rm -rf "$LOC" 
+        test -n "$overwrite" && rm -rf "$LOC"
         test ! -e "$LOC" && (
             wget -O Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
             bash Miniforge3.sh -b -p "$LOC"
@@ -87,12 +124,14 @@ function install_conda {
 }
 
 function commit_config {
-    find $CONFIGDIR -type f -name ".session.vim" -delete -print | xargs -I{} echo "Deleted: {}"
-    find $CONFIGDIR -type f -name "*.sw[klmnop]" -delete -print | xargs -I{} echo "Deleted: {}"
-    find $CONFIGDIR -name .DS_Store -delete -print | xargs -I{} echo "Deleted: {}"
-    find $CONFIGDIR -name .git | while read line; do
-        zsh -c "load utils; cd "$(dirname $line)" && git add . && acom"
-    done
+    (
+        find $CONFIGDIR -type f -name ".session.vim" -delete -print | xargs -I{} echo "Deleted: {}"
+        find $CONFIGDIR -type f -name "*.sw[klmnop]" -delete -print | xargs -I{} echo "Deleted: {}"
+        find $CONFIGDIR -name .DS_Store -delete -print | xargs -I{} echo "Deleted: {}" 
+        find $CONFIGDIR -name .git | while read line; do
+            zsh -c "load utils; cd "$(dirname $line)" && git add . && acom"
+        done 
+    ) 
     zsh -c 'cd $CONFIGDIR && git pull && git push && make'
 }
 
@@ -102,7 +141,7 @@ function dl {
     mv "$target" "$1"
 }
 
-function expose_ssh_port {
+function expose_port {
     function log {
         command echo ;
         command echo "$(hostname): $@" ;
@@ -114,8 +153,8 @@ function expose_ssh_port {
     (  cat ~/.ssh/authorized_keys ~/.ssh/id_rsa.pub | sort | uniq > ~/.ssh/authorized_keys.tmp &&
       mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys )
 
-    ( log "forwarding port $1 to 22 with ssh..." && 
-      export CMD=( ssh -o ExitOnForwardFailure=yes -fTN -L "*:${1}:localhost:22" localhost ) &&
+    ( log "forwarding port $1 to ${2-22} with ssh..." &&
+      export CMD=( ssh -o ExitOnForwardFailure=yes -fTN -L "*:${1}:localhost:${2-22}" localhost ) &&
       command "${CMD[@]}" && log "adding crontab entry: $(printf '%q ' "${CMD[@]}")" &&
       ( crontab -l ; echo "* * * * * $(printf '%q ' "${CMD[@]}")" ) | sort | uniq | crontab - )
 }
@@ -123,10 +162,13 @@ function expose_ssh_port {
 function expose {
     if [[ -n "$2" ]]; then
         host=$1
+        if [[ -z "$TARGET_PORT" ]]; then
+            TARGET_PORT=22
+        fi
         shift
-        ssh -t "$@" "$(typeset -f expose_ssh_port); expose_ssh_port $host"
+        ssh -t "$@" "$(typeset -f expose_port); expose_port $host $TARGET_PORT"
     else
-        echo "Usage: expose <port> <host>"
+        echo "Usage: expose <port> <host> [target-port]"
         return 1
     fi ;
 }
@@ -149,7 +191,7 @@ function xlink {
 }
 
 function sourced {
-    $SHELL -lixc "command -v conda && conda activate $CONDA_DEFAULT_ENV; exit" 2>&1 | sed -nE 's/^([^ ]*>|[+]*)( \. | source )(.*)$/\3/p' | grep -vE 'compdump|cache' 
+    $SHELL -lixc "command -v conda && conda activate $CONDA_DEFAULT_ENV; exit" 2>&1 | sed -nE 's/^([^ ]*>|[+]*)( \. | source )(.*)$/\3/p' | grep -vE 'compdump|cache'
 }
 
 function findsource {
@@ -201,7 +243,7 @@ function znew {
     commit_config "$1" &&
     { ! command -v "$1" || unset -f "$1" ; } &&
     autoload -Uz "$1" &&
-    rehash 
+    rehash
 }
 
 function xnew {
@@ -253,7 +295,7 @@ function asrm {
         target="${arg%/}.$RANDOM" &&
         mv "$arg" "$target" &&
         eval "nohup rm -rvf '$target' &>$HOME/.local/var/asrm.log &"
-    done 
+    done
 }
 
 function publish_dotfiles {

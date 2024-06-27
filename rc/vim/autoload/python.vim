@@ -1,20 +1,4 @@
 
-function python#interactive()
-    write
-    try
-        bd! ipython
-    catch
-    endtry
-    vert term ++close ipython --no-confirm-exit --pdb --pylab=auto -i %
-endfunction
-
-function python#uninteract()
-    try
-        bd! ipython
-    catch
-    endtry
-endfunction
-
 function python#pipsetup()
     if empty($CONDA_PREFIX)
         return
@@ -272,7 +256,7 @@ endfunction
 function python#ipynb_fold()
     let range = getline(v:lnum - 3, v:lnum + 2)
     for line in range
-        if line =~ '^# \?%%'
+        if line =~ '^#.\?.\?%%'
             return 0
         endif
     endfor
@@ -328,7 +312,7 @@ endfunction
 function python#aspy()
     write
     let l:base = expand('%:p:r')
-    exe 'edit '.l:base.'.py'
+    exe 'edit +'.line('.').' '.l:base.'.py'
     exe 'bd '.l:base.'.ipynb'
     redraw!
 endfunction
@@ -336,7 +320,180 @@ endfunction
 function python#asipynb()
     write
     let l:base = expand('%:p:r')
-    exe 'edit '.l:base.'.ipynb'
+    exe 'edit +'.line('.').' '.l:base.'.ipynb'
     exe 'bd '.l:base.'.py'
     redraw!
+endfunction
+
+function python#around_cell()
+    let lnum = line('.')
+    if search('^#.\?.\?%%', 'bcW') == 0
+        return 0
+    endif
+    let start = getpos('.')
+    if search('^#.\?.\?%%', 'W') == 0
+        return 0
+    endif
+    -1
+    let end = getpos('.')
+    return ['V', start, end]
+endfunction
+
+function python#inner_cell()
+    let lnum = line('.')
+    if search('^#.\?.\?%%', 'bcW') == 0
+        return 0
+    endif
+    +1
+    let start = getpos('.')
+    if search('^#.\?.\?%%', 'W') == 0
+        return 0
+    endif
+    -1
+    let end = getpos('.')
+    return ['V', start, end]
+endfunction
+
+
+function python#interactive()
+    write
+    try
+        bd! ipython
+    catch
+    endtry
+    vert term ++close ipython --no-confirm-exit --pdb --pylab=auto -i %
+endfunction
+
+function python#uninteract()
+    try
+        bd! ipython
+    catch
+    endtry
+endfunction
+
+function! s:execute_cell()
+    if !jukit#splits#split_exists('output')
+        call jukit#splits#output_and_history()
+    endif
+    call jukit#send#section(0)
+    call jukit#cells#jump_to_next_cell()
+endfunction
+
+function python#word(mode)
+    if a:mode == 'v'
+        let word = jukit#util#get_visual_selection()
+    else
+        let line = getline('.')
+        let word = matchstr(line, '\(\k\.\|\k\)*\%'.col('.').'c\k\+')
+    endif
+    if word == ''
+        let word = expand('<cword>')
+    endif
+    return word
+endfunction
+        
+
+function python#notebooksetup()
+    set filetype=python
+
+    nmap <F3> :call jukit#splits#output_and_history()<cr>
+    nmap <F4> :call jukit#splits#close_output_and_history(0)<cr>
+    nmap <F5> <cmd>call jukit#splits#close_output_and_history(0)\|call jukit#splits#output_and_history()\|call jukit#send#all()<cr>
+    nnoremap <space>np :call jukit#convert#notebook_convert("jupyter-notebook")<cr>
+
+    nnoremap <c-cr> <cmd>call <sid>execute_cell()<cr>
+    nnoremap <c-space> <cmd>call <sid>execute_cell()<cr>
+    nnoremap ,<space> <cmd>call <sid>execute_cell()<cr>
+
+    nnoremap <space>j :call jukit#cells#create_above(0)<cr>
+    nnoremap <space>k :call jukit#cells#create_below(0)<cr>
+    nnoremap <space>- <cmd>call jukit#cells#split()<cr>
+    nmap ]h :call jukit#cells#jump_to_next_cell()<cr>zz
+    nmap [h :call jukit#cells#jump_to_previous_cell()<cr>zz
+    vmap ]h :call jukit#cells#jump_to_next_cell()<cr>m'gv``
+    vmap [h :call jukit#cells#jump_to_previous_cell()<cr>m'gv``
+
+    function! s:getvar(mode)
+        call jukit#send#send_to_split(python#word(a:mode))
+    endfun
+    function! s:getshape(mode)
+        let cmd = 'import jax; jax.tree_map(lambda x: x.shape if hasattr(x, "shape") else type(x), ' . python#word(a:mode) . ')'
+        call jukit#send#send_to_split(cmd)
+    endfun
+
+    nnoremap ,v <cmd>call <sid>getvar('n')<cr>
+    nnoremap ,s <cmd>call <sid>getshape('n')<cr>
+    vnoremap ,v <esc><cmd>call <sid>getvar('v')<cr>gv
+    vnoremap ,s <esc><cmd>call <sid>getshape('v')<cr>gv
+    nnoremap <cr> :call jukit#send#line()<cr>
+    vnoremap <cr> :<C-U>call jukit#send#selection()<cr>
+    nnoremap <leader>cc :call jukit#send#until_current_section()<cr>
+    nnoremap <leader>all :call jukit#send#all()<cr>
+
+    nnoremap <space>j :call jukit#cells#create_below(0)<cr>
+    nnoremap <space>k :call jukit#cells#create_above(0)<cr>
+    nnoremap <space>ct :call jukit#cells#create_below(1)<cr>
+    nnoremap <space>cT :call jukit#cells#create_above(1)<cr>
+    nnoremap dah :call jukit#cells#delete()<cr>
+    nnoremap <space>- :call jukit#cells#split()<cr>
+    nnoremap <space>cM :call jukit#cells#merge_above()<cr>
+    nnoremap <space>cm :call jukit#cells#merge_below()<cr>
+    nnoremap <space>ck :call jukit#cells#move_up()<cr>
+    nnoremap <space>cj :call jukit#cells#move_down()<cr>
+    nnoremap <space>J :call jukit#cells#jump_to_next_cell()<cr>
+    nnoremap <space>K :call jukit#cells#jump_to_previous_cell()<cr>
+    nnoremap <space>ddo :call jukit#cells#delete_outputs(0)<cr>
+    nnoremap <space>dda :call jukit#cells#delete_outputs(1)<cr>
+    nnoremap <space>ht :call jukit#convert#save_nb_to_file(0,1,'html')<cr>
+    nnoremap <space>rht :call jukit#convert#save_nb_to_file(1,1,'html')<cr>
+    nnoremap <space>pd :call jukit#convert#save_nb_to_file(0,1,'pdf')<cr>
+    nnoremap <space>rpd :call jukit#convert#save_nb_to_file(1,1,'pdf')<cr>
+    nnoremap <leader><space> :call jukit#send#section(0)<cr>
+    nnoremap <cr> :call jukit#send#line()<cr>
+    vnoremap <cr> :<C-U>call jukit#send#selection()<cr>
+    nnoremap <space>cc :call jukit#send#until_current_section()<cr>
+    nnoremap <space>all :call jukit#send#all()<cr>
+    nnoremap <C-G> :call jukit#splits#show_last_cell_output(1)<cr><C-G>
+
+    nnoremap <leader>os :call jukit#splits#output()<cr>
+    nnoremap <leader>ts :call jukit#splits#term()<cr>
+    nnoremap <leader>hs :call jukit#splits#history()<cr>
+    nnoremap <leader>ohs :call jukit#splits#output_and_history()<cr>
+    nnoremap <leader>hd :call jukit#splits#close_history()<cr>
+    nnoremap <leader>od :call jukit#splits#close_output_split()<cr>
+    nnoremap <leader>ohd :call jukit#splits#close_output_and_history(1)<cr>
+    nnoremap <leader>ah :call jukit#splits#toggle_auto_hist()<cr>
+    nnoremap <leader>sl :call jukit#layouts#set_layout()<cr>
+
+    highlight jukit_cellmarker_colors ctermbg=10 ctermfg=10
+    augroup ipynb
+        autocmd! * <buffer>
+        if exists('b:matchtitle')
+            silent! call matchdelete(b:matchtitle)
+            unlet b:matchtitle
+        else
+            autocmd BufWinEnter <buffer> if !exists('b:matchtitle') | let b:matchtitle = matchadd('ToolbarButton', '###.*') | endif
+            autocmd BufWinLeave <buffer> silent! call matchdelete(b:matchtitle) | unlet b:matchtitle
+        endif
+    augroup END
+
+    if &foldmethod == 'expr'
+        setlocal foldmethod=manual
+    else
+        setlocal foldmethod=expr
+        setlocal foldexpr=python#ipynb_fold()
+        normal! zx
+    endif
+    doautocmd BufWinEnter
+
+    call textobj#user#plugin('python', {
+                \   'cell': {
+                \     'select-a': 'ah',
+                \     'select-i': 'ih',
+                \     'select-a-function': 'python#around_cell',
+                \     'select-i-function': 'python#inner_cell',
+                \     'sfile': expand('<sfile>'),
+                \   },
+                \ })
+
 endfunction

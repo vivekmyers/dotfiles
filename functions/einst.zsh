@@ -36,7 +36,7 @@ for pkg in $added; do
             | execute 'normal cc  - $name=$version'
             | execute '!echo Package $name=$version added to environment.yml:' . line('.') . ', replacing $name' . vers
         | else 
-            | execute 'normal o  - $name=$version'
+            | execute 'normal o- $name=$version'
             | execute '!echo Package $name=$version added to environment.yml:' . line('.')
         | endif" \
         +wq! environment.yml

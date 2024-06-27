@@ -67,6 +67,12 @@ function tkx {
     tmux new -s $1
 }
 
+
+function tc {
+    tmux -CC attach || tmux -CC
+}
+
+
 function ta {
     if [ -z $1 ]; then
         tmux attach
@@ -75,3 +81,6 @@ function ta {
     fi
 }
 
+function tsh {
+    command ssh -t $1 "tmux -CC attach || tmux -CC"
+}

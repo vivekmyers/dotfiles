@@ -29,9 +29,9 @@ function ml {
 
 function setup {
     if istpu "$1"; then
-        setup_tpu "$1"
+        timeout 300 zsh -ic "setup_tpu $1"
     else
-        setup_base "$1" "$2" "$3"
+        timeout 300 zsh -ic "setup_base $1 $2 $3"
     fi
 }
 
@@ -40,20 +40,24 @@ function setup_base {
     ( flock -n 9 || { echo "Another setup is already running"; return 1; }
       ( commit_config >~/.local/var/setup.$1.log 2>&1 & )
       ssh -nNM -S "$sock" "$1" &
+      ssh -S "$sock" "$1" 'chown -R $USER ~/config ~/.ssh ~/.ssh/*'
+      ssh -S "$sock" "$1" "chmod -R go-rwx ~/config ~/.ssh ~/.ssh/*"
+      trap "rm -f ~/.local/var/$1.setup.lock" EXIT
       ( cmd="cd ~/config && ( git commit -am. || true ) && git pull && git push && flock -n config.lock make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")"
-          ssh -S "$sock" -t "$1" "~/conda/bin/zsh -lc $(printf "%q" $cmd)" || 
+        ssh -S "$sock" -t "$1" "~/conda/bin/zsh -c $(printf "%q" $cmd)" || 
         ( rsync -e "ssh -t -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/" &&
           ssh -t -S "$sock" "$1" "
+            rm -f ~/.ssh/id_rsa ~/.ssh/id_rsa.pub ~/.ssh/config &&
             cd ~/config && 
             git reset --hard && 
             git clean -df && 
             flock -n config.lock make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")"
         )
-        ssh -t -S "$sock" "$1" "touch ~/. && ~/conda/bin/zsh -lic commit_config"
+        ssh -t -S "$sock" "$1" "touch ~/. && ~/conda/bin/zsh -c commit_config"
       )
       ssh -O exit -S "$sock" "$1"
       ( commit_config >>~/.local/var/setup.$1.log 2>&1 & )
-    ) 9>~/.$1.setup.lock
+    ) 9>~/.local/var/$1.setup.lock
 }
 
 function setup_tpu {
@@ -64,17 +68,19 @@ function setup_tpu {
       # echo "Trying conda at $CONDALOC"
       # cmd="sudo mkdir -p ${CONDALOC%/*}"
       # ssh -S "$sock" "$1" "echo \"Running: $cmd\" && $cmd"
+      trap "rm -f ~/.local/var/$1.setup.lock" EXIT
       ( flock -n 9 || { echo "Another setup is already running"; exit 1; }
       ( commit_config >~/.local/var/setup.$1.log 2>&1 & )
       ( cmd="cd ~/config && ( git commit -am. || true ) && git pull && git push && flock -n config.lock make all CONDA_PREFIX=$CONDALOC"
+        ssh -S "$sock" "$1" "chmod -R go-rwx ~/config ~/.ssh"
         ssh -S "$sock" -t "$1" "~/conda/bin/zsh -lc $(printf "%q" $cmd)" || (
-        rsync -e "ssh -t -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/" &&
+            rsync -e "ssh -t -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/"
             ssh -t -S "$sock" "$1" "cd ~/config && flock -n config.lock make all CONDA_PREFIX=$CONDALOC" 
         )
-        ssh -t -S "$sock" "$1" "cd $CONDALOC/.. && zsh -lic mkhome"
+        ssh -t -S "$sock" "$1" "cd $CONDALOC/.. && zsh -ic mkhome"
       )
       ( commit_config >>~/.local/var/setup.$1.log 2>&1 & )
-      ) 9>~/.$1.setup.lock
+      ) 9>~/.local/var/$1.setup.lock
       ssh -O exit -S "$sock" "$1"
     )
 }
@@ -123,18 +129,6 @@ function install_conda {
     fi
 }
 
-function commit_config {
-    (
-        find $CONFIGDIR -type f -name ".session.vim" -delete -print | xargs -I{} echo "Deleted: {}"
-        find $CONFIGDIR -type f -name "*.sw[klmnop]" -delete -print | xargs -I{} echo "Deleted: {}"
-        find $CONFIGDIR -name .DS_Store -delete -print | xargs -I{} echo "Deleted: {}" 
-        find $CONFIGDIR -name .git | while read line; do
-            zsh -c "load utils; cd "$(dirname $line)" && git add . && acom"
-        done 
-    ) 
-    zsh -c 'cd $CONFIGDIR && git pull && git push && make'
-}
-
 function dl {
     target="$(readlink "$1")" &&
     unlink "$1" &&
@@ -154,8 +148,8 @@ function expose_port {
       mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys )
 
     ( log "forwarding port $1 to ${2-22} with ssh..." &&
-      export CMD=( ssh -o ExitOnForwardFailure=yes -fTN -L "*:${1}:localhost:${2-22}" localhost ) &&
-      command "${CMD[@]}" && log "adding crontab entry: $(printf '%q ' "${CMD[@]}")" &&
+      CMD=( ssh -o ExitOnForwardFailure=yes -fTN -L "*:${1}:localhost:${2-22}" localhost ) &&
+      ( zsh -lic "$(printf '%q ' "${CMD[@]}")" || command "${CMD[@]}" ) && log "adding crontab entry: $(printf '%q ' "${CMD[@]}")" &&
       ( crontab -l ; echo "* * * * * $(printf '%q ' "${CMD[@]}")" ) | sort | uniq | crontab - )
 }
 
@@ -166,7 +160,8 @@ function expose {
             TARGET_PORT=22
         fi
         shift
-        ssh -t "$@" "$(typeset -f expose_port); expose_port $host $TARGET_PORT"
+        printf -v cmd %q "$(typeset -f expose_port); expose_port $host $TARGET_PORT"
+        command ssh -v -t "$@" "which zsh && (zsh -ic $cmd;:) || bash -ic $cmd"
     else
         echo "Usage: expose <port> <host> [target-port]"
         return 1
@@ -299,5 +294,6 @@ function asrm {
 }
 
 function publish_dotfiles {
+    ( cd ~/config && deswap )
     rsync -avz ~/config/ ~/dotfiles/ --exclude private --exclude .git --delete
 }

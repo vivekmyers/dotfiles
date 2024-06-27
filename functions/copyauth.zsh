@@ -7,7 +7,7 @@ for dst in "$@"; do
     else
         key="$(ssh "$src" 'cat ~/.ssh/id_rsa.pub')"
     fi &&
-    ssh "$dst" 'tmp="$(mktemp)" &&
+    ssh -J "$src" "$dst" 'tmp="$(mktemp)" &&
         trap "rm -f $tmp" EXIT &&
         ( cat ~/.ssh/authorized_keys &&
           echo "'$key'" ) > "$tmp" &&

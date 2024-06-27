@@ -11,7 +11,7 @@ LN = ln -sf
 
 CONDA_CLI = vim conda-minify black pipx flake8 mypy pylint isort \
 			pipdeptree pipreqs autopep8 openai jupyter tmux curl git \
-			ipython jq
+			ipython jq nvitop prettier
 CONDA_PKG = nodejs imagemagick magic-wormhole jedi
 PIP_CLI = imgcat autoimport arxiv_latex_cleaner
 EXTRA_CLI = wormhole node
@@ -23,14 +23,16 @@ ifneq ($(shell hostname),phosphate)
 endif
 endif
 
-BIN_CLI = $(shell ls bin)
+unexport PIP_NO_DEPS
+
+BIN_CLI = $(shell ls bin) $(shell ls private/bin)
 TOOLS = $(CONDA_CLI) $(PIP_CLI) $(EXTRA_CLI) $(BIN_CLI)
 EXTRA = $(HOME)/.local/etc
 RCEXCLUDE = cache/ ssh/ netrc
 ZSH = $(HOME)/.omz
 FDIR = $(ZSH)/functions
 BIN = $(HOME)/.local/bin
-SSH = $(HOME)/.ssh/config $(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub
+SSH = $(HOME)/.ssh/config $(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub $(HOME)/.ssh/sockets $(HOME)/.ssh/config_tpus
 FUNCTIONS = $(addprefix $(FDIR)/,$(shell basename -s .zsh functions/*.zsh))
 VAR = $(HOME)/.local/var
 
@@ -105,43 +107,53 @@ endif
 $(CONDABIN)/zsh: $(CONDA) | $(BIN)
 	$(CONDA) install -y zsh --force-reinstall
 
-$(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub: | $(HOME)/.ssh
-	cp -n $(CURDIR)/private/ssh/$(notdir $@) $@ || touch $@
+$(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub: $(HOME)/.ssh/%: private/ssh/% | $(HOME)/.ssh
+	cp -n $(CURDIR)/private/ssh/$(notdir $@) $@
+	touch $@
 	chmod 600 $@
 
-$(HOME)/.ssh/config: | $(HOME)/.ssh
-	$(LN) $(CURDIR)/private/ssh/config $@
+$(HOME)/.ssh/config: private/ssh/config | $(HOME)/.ssh
+	$(LN) $(CURDIR)/$< $@
 	chmod 600 $@
 
-$(HOME)/.netrc:
+$(HOME)/.ssh/sockets:
+	mkdir -p $@
+
+$(HOME)/.ssh/config_tpus: | $(HOME)/.ssh
+	touch $@
+	chmod 600 $@
+
+$(HOME)/.netrc: private/netrc
 	$(LN) $(CURDIR)/private/netrc $@
 
-$(HOME)/.git-credentials:
+$(HOME)/.git-credentials: private/git-credentials
 	$(LN) $(CURDIR)/private/git-credentials $@
 
-$(HOME)/.config/github-copilot/hosts.json: | $(HOME)/.config/github-copilot
+$(HOME)/.config/github-copilot/hosts.json: private/github-copilot/hosts.json | $(HOME)/.config/github-copilot
 	$(LN) $(CURDIR)/private/github-copilot/hosts.json $@
 
 conda: $(CONDA) $(HOME)/conda $(TOOLS) ;
 
-vim: $(HOME)/.vimrc $(HOME)/.vim/plug
+vim: $(HOME)/.vimrc $(HOME)/.vim/plug.log $(HOME)/.vim/tags
 
-$(HOME)/.vim/plug: $(HOME)/.vim/autoload/plugins.vim | $(BIN)/vim $(HOME)/.vim/autoload/plug.vim
+$(HOME)/.vim/plug.log: $(HOME)/.vim/plugin/load.vim $(BIN)/vim $(HOME)/.vim/autoload/plug.vim
 	rm -f $@
 	$(BIN)/vim +'PlugInstall --sync' +"w $@" +qall 1>/dev/null
 	cat $@
 
+$(HOME)/.vim/tags: $(BIN)/ctags $(HOME)/.vim/plug.log | $(HOME)/.vim
+	$(BIN)/ctags --exclude='*.json' --exclude='*.html' --quiet -R -f $@ $(HOME)/.vim
+
 $(HOME)/.vim/autoload/plug.vim: | $(BIN)/curl $(HOME)/.vim
-	$(BIN)/curl -fLo $@ --create-dirs \
-					https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+	$(BIN)/curl -fLo $@ --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 $(TOOLS): %: $(BIN)/% ;
 
 $(PIPTARGETS): $(BIN)/%: | $(BIN) $(PIP)
-	PIP_NO_DEPS= $(PIP) install $*
+	$(PIP) install $*
 
 $(BIN)/wormhole:
-	PIP_NO_DEPS= $(PIP) install magic-wormhole
+	$(PIP) install magic-wormhole
 
 $(CONDABIN)/node:
 	-$(CONDA) uninstall -y nodejs
@@ -194,6 +206,7 @@ $(CONDATARGETS): $(CONDA)
 
 $(CONDABIN)/%: $(EXTRA)/environment.yml
 	$(shell test -x $@ || echo $(CONDA) install -y $(notdir $@))
+	touch $@
 
 $(CONDABIN)/wormhole: $(CONDA)
 	$(CONDA) install -y magic-wormhole

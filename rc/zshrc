@@ -40,6 +40,5 @@ if [ -f '$HOME/google-cloud-sdk/completion.zsh.inc' ]; then . '$HOME/google-clou
 
 export TERM=xterm-256color
 
-
 test -n "$PROF" && zprof || true
 

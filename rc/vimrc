@@ -9,6 +9,7 @@ inoremap <C-S><C-O> <cmd>w<cr>
 nnoremap <C-S><C-D> <cmd>wa<cr><cmd>call utils#savesession()<cr><cmd>qa<cr>
 nnoremap <C-S><C-L> <cmd>call utils#loadsession()<cr>
 nmap ,, <cmd>w<cr>
+nmap <F10> :wall<cr>
 
 " window management
 nnoremap <C-D> <cmd>call utils#closenext()<cr>
@@ -20,6 +21,10 @@ nmap <C-S><C-R> <cmd>call utils#reload()<cr>
 map <F2> <C-S>/
 imap <F2> <C-S>/
 map <leader><F2> <C-S>\
+nnoremap <leader>q <cmd>try<bar>write<bar>catch<bar>endtry<bar>b#<bar>bd#<cr>
+nnoremap <leader>Q <cmd>b#<bar>bd#<cr>
+nnoremap <C-F2> <cmd>Dispatch nno<cr>
+noremap <C-6> <C-^>
 map <leader>so :w<cr>:source %<cr>
 map + <C-W>+<C-W>>
 
@@ -31,21 +36,24 @@ noremap ; :
 noremap "" "*
 vnoremap * y/\V<C-R>=substitute(escape(@@,"/\\"),"\n","\\\\n","ge")<CR><CR>
 vnoremap # y?\V<C-R>=substitute(escape(@@,"?\\"),"\n","\\\\n","ge")<CR><CR>
+nnoremap  <silent> <C-Q> :bnext<cr>
+tnoremap  <silent> <C-Q> <C-W>:bnext<cr>
 
 " edit configs
 noremap <C-N><C-N> <cmd>e $CONFIGDIR/rc/vimrc<cr>
 noremap <C-N><C-G> <cmd>e $CONFIGDIR/rc/gvimrc<cr>
-noremap <C-N><C-G> <cmd>e $CONFIGDIR/rc/vim/autoload/plugins.vim<cr>
+noremap <C-N><C-G> <cmd>e $CONFIGDIR/rc/vim/plugin/plugins.vim<cr>
 noremap <C-N><C-F> <cmd>call utils#fileconf()<cr>
 noremap <C-N><C-A> <cmd>call utils#autoconf()<cr>
 noremap <C-N><C-S> <cmd>call utils#snipconf()<cr>
 noremap <C-N><C-M> <cmd>e makefile<cr>
-noremap <C-N><C-P> <cmd>e $CONFIGDIR/rc/vim/autoload/plugins.vim<cr>
+noremap <C-N><C-P> <cmd>e $CONFIGDIR/rc/vim/plugin/load.vim<cr>
+noremap <C-N><C-R> <cmd>Dispatch commit_config<cr>
 nnoremap <C-N><C-L> <cmd>call utils#localconf()<cr>
 nnoremap goo <cmd>call utils#gotosymlink()<cr>
+nnoremap <expr> goc "<cmd>call gtfo#open#file('".expand("<cfile>")."')<cr>"
 
 " run commands
-noremap ms <cmd>w<cr>:!<up>
 noremap M <cmd>wall<cr>:Make<space><up>
 nnoremap <space><space> :Dispatch<space>
 nnoremap <space><leader> :AbortDispatch<cr>
@@ -58,6 +66,7 @@ nnoremap <leader>kc <cmd>!pkill -f ctags<cr>
 " file navigation
 nnoremap ,e <cmd>Explore<cr>
 nnoremap ,r :RemoteExplore <up>
+nnoremap ,p <cmd>Explore ~/papers<cr>
 command! -nargs=* RemoteExplore call utils#remote(<f-args>)
 
 " command! -nargs=* SearchFiles call utils#searchfiles(<f-args>)
@@ -69,6 +78,8 @@ nmap ,f <cmd>!open %:h<cr>
 nmap ,n <cmd>NERDTreeFind<cr>
 nmap ,m <cmd>NERDTreeToggle<cr>
 let g:netrw_list_hide = '\(^\|\s\s\)\zs\.\S\+'
+let g:netrw_fastbrowse = 0
+autocmd FileType netrw setl bufhidden=wipe
 set maxmempattern=5000
 let g:startdir = getcwd()
 
@@ -118,10 +129,9 @@ augroup vimrc
     autocmd BufReadPre *.ipynb call python#pythonsetup()
 
 
-    autocmd BufEnter,BufWinEnter,WinEnter imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
+    " autocmd BufEnter,BufWinEnter,WinEnter imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
 augroup END
 
-set guifont=Meslo\ LG\ S\ Regular\ for\ Powerline:h13
 
 packadd cfilter
 noh
@@ -130,6 +140,7 @@ set wildignore+=*/node_modules/*
 set wildignore+=*/wandb/*
 set wildignore+=*/wandb
 
+" terminal
 let g:terminal_ansi_colors = [
   \'#262626', 
   \'#d70000', 
@@ -149,16 +160,14 @@ let g:terminal_ansi_colors = [
   \'#ffffd7' ]
 highlight Terminal guibg='#002b36'
 highlight Terminal guifg='#93a1a1'
-
-
+autocmd TerminalOpen * if bufwinnr('') > 0 | setlocal nobuflisted | endif
+nnoremap <leader>t <cmd>vert term ++close<cr>
 tnoremap <esc><esc> <C-W>:bfirst<CR>
-tnoremap <C-Left> <C-W>:bprev<CR>
-tnoremap <C-Right> <C-W>:bnext<CR>
 tnoremap <F1> <C-W>N
 
 
 set diffopt+=vertical
 nnoremap <C-L> <C-L><cmd>AirlineRefresh<cr><cmd>call utils#refreshcomplete()<cr>
 
-
-
+exe 'set shell='.expand('$SHELL')
+set guifont=Meslo\ LG\ S\ Regular\ for\ Powerline:h13

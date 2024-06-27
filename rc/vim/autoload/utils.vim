@@ -29,7 +29,7 @@ function utils#savesession()
 endfunction
 
 function utils#refreshcomplete()
-    imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
+    " imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
 endfunction
 
 

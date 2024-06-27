@@ -55,14 +55,21 @@ read -r -d '' SSH_EXPECT_SCRIPT << 'EOF'
 set timeout 15
 log_user 0
 set cmd [lrange $argv 0 end]
+set tmp [exec mktemp -u]
+
+eval exec mkfifo $tmp
+exec sh -c "cat $tmp 1>&2; rm $tmp" &
+
 if { [catch { system {test -t 0} } error] } {
-    eval spawn shnotty $cmd
+    spawn sh -c "cat | ( \"\$@\" ) 2>$tmp" sshlib {*}$cmd
     set piped 1
     set timeout 5
 } else {
-    eval spawn $cmd
+    spawn sh -c "\"$@\" 2>$tmp" sshlib {*}$cmd
     set piped 0
 }
+
+
 
 trap {
     set rows [stty rows]
@@ -104,27 +111,28 @@ expect {
     }
 }
 
-if { $piped } {
-    while {[gets stdin line] != -1} {
-        send "$line\r"
-        expect -re "(.*\n)"
+catch { 
+    if { $piped } {
+        while {[gets stdin line] != -1} {
+                send "$line\r"
+                expect -re "(.*\n)"
+        }
+        send "\004"
+        expect eof
+        send_user -- "$expect_out(buffer)"
+    } else {
+        interact
     }
-    send "\004"
-    expect eof
-    catch { send_user -- "$expect_out(buffer)" } error
-} else {
-    catch { interact } error
-}
+} error
 
 catch wait result
 exit [lindex $result 3]
 EOF
 
 function ssh_wrapper {
-    cmd=( $@ )
     if command -v expect &> /dev/null; then
         ( export GOOGLE_AUTH_SCRIPT
-          expect <(printf "%s" "$SSH_EXPECT_SCRIPT") $cmd )
+          expect <(printf "%s" "$SSH_EXPECT_SCRIPT") "$@" )
     else
         command "$@"
     fi

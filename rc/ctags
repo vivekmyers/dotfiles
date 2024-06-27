@@ -1,3 +1,5 @@
+--fields=+l
+--fields=+d
 --langdef=tex2
 --langmap=tex2:+.tex
 --langmap=tex2:+.cls

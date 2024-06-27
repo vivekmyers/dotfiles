@@ -7,11 +7,11 @@ function exedit {
 
 function editor { 
     echo "$@" | grep -qE "vim" && $EDITOR "$@" ||
-    $EDITOR +"set ft=bash" "$@"
+    $EDITOR +"set ft=bash" +"filetype detect" "$@"
 }
 
 function endconf {
-    ( commit_config "$1" & ) > ~/.local/var/commit_config.log 2>&1
+    ( commit_config "$1" & ) >> ~/.local/var/commit_config.log 2>&1
     test -z "$CONFCONT" && reprof;
 }
 
@@ -43,6 +43,8 @@ function conf {
     for f in $fpath; do
         tryedit "$f/$1"
     done
+    tryedit "$HOME/.vim/$1"
+    tryedit "$HOME/.vim/autoload/$1"
     tryedit "$(sourced | grep -E "/$1$|/$1\.[^.]*$" | tail -n1)"
     editdef "$1" && endconf "$1"
     exedit "$1" && endconf "$1"

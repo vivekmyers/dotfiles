@@ -1,22 +1,4 @@
-
-if has("nvim")
-    if empty(glob('~/.config/nvim/autoload/plug.vim'))
-        silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
-                    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-        autocmd VimEnter * call PlugInstall
-    endif
-else
-    if empty(glob('~/.vim/autoload/plug.vim'))
-        silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
-                    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    endif
-endif
-
-if has('nvim')
-    call plug#begin('~/.config/nvim/plug.vim')
-else
-    call plug#begin('~/.vim/plug.vim')
-endif
+call plug#begin('~/.vim/plug.vim')
 
 Plug 'rhysd/conflict-marker.vim'
     let g:conflict_marker_common_ancestors = '^||||||| .*$'
@@ -37,7 +19,37 @@ Plug 'rhysd/conflict-marker.vim'
 Plug 'junegunn/vim-plug'
     nnoremap <leader>pi <cmd>PlugInstall<cr>
 
+" Plug 'vim-scripts/scratch.vim'
+"     nmap <space>s <cmd>Scratch<cr>
+"     nmap <space>S <cmd>Sscratch<cr>
+Plug 'mtth/scratch.vim'
+    nmap <space>s <cmd>Scratch<cr>
+    nmap <space>S <cmd>ScratchInsert<cr>
+
+Plug 'zenbro/mirror.vim'
+    let g:mirror#spawn_command = ':Start '
+
+
+Plug 'trapd00r/vim-syntax-vidir-ls'
+Plug 'kana/vim-textobj-line'
+    
+
+Plug 'c0r73x/vimdir.vim'
+    nmap ,d <cmd>:Vimdir<cr>
+    nmap ,D <cmd>:VimdirR<cr>
+    let g:vimdir_force = 1
+
 Plug 'mbbill/undotree'
+Plug 'joom/latex-unicoder.vim'
+    let g:unicoder_cancel_normal = 1
+    let g:unicoder_cancel_insert = 1
+    let g:unicoder_cancel_visual = 1
+    nnoremap <C-u> :call unicoder#start(0)<CR>
+    inoremap <C-u> <Esc>:call unicoder#start(1)<CR>
+    vnoremap <C-u> :<C-u>call unicoder#selection()<CR>
+    let g:unicode_map = {
+        \ "\\i" : "ı"
+        \ }
 
 
 Plug 'wellle/targets.vim'
@@ -51,6 +63,19 @@ Plug 'mhinz/vim-grepper'
     vmap <F12> <plug>(GrepperOperator)
     nmap <F12> <cmd>Grepper -highlight -tool git -grepprg git grep -niI '$*'<cr>
     nmap <F11> <cmd>Grepper -highlight -tool git -grepprg git ls-files \| grep -i '$*'<cr>
+
+" Plug 'airblade/vim-gitgutter'
+" git@github.com:moll/vim-bbye.git
+Plug 'moll/vim-bbye'
+    nnoremap <leader>q <cmd>w<cr>:Bdelete<cr>
+    nnoremap <leader>Q :Bdelete!<cr>
+    nnoremap <F6> :qall!<cr>
+    imap <F6> <esc>:qall!<cr>
+    nnoremap <F7> :Bwipeout!<cr>
+    imap <F7> <esc>:Bwipeout!<cr>
+    tnoremap <F7> <C-\><C-n>:Bwipeout!<cr>
+    tnoremap <F6> <C-\><C-n>:qall!<cr>
+
 
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-rhubarb'
@@ -105,13 +130,15 @@ Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-tbone'
 
+    nnoremap <space>t :Tmux<space>
+
 Plug 'michaeljsmith/vim-indent-object'
-Plug 'asheq/close-buffers.vim'
-    nmap <C-S>\ <cmd>Bdelete other<cr><C-L>
+Plug 'schickling/vim-bufonly'
+    nmap <C-S>\ <cmd>BufOnly<cr><C-L>
 
 Plug 'ludovicchabant/vim-gutentags'
     let g:gutentags_cache_dir = '~/.cache/tags'
-    let g:gutentags_project_root = ['.git', '.hg', '.svn', '.bzr', '_darcs', '.root', '.build', '.cenv', '.env']
+    let g:gutentags_project_root = ['.git', '.hg', '.svn', '.bzr', '_darcs', '.root', 'build', '.cenv', '.env']
     let g:gutentags_ctags_tagfile = '.tags'
     let g:gutentags_ctags_extra_args = [
                 \'--fields=+l', '--fields=+d', '--options=' . $HOME . '/.ctags',
@@ -124,11 +151,12 @@ Plug 'ludovicchabant/vim-gutentags'
 
 
 Plug 'scrooloose/nerdtree'
+    let g:NERDTreeHijackNetrw=0
 Plug 'PhilRunninger/nerdtree-visual-selection'
 
 Plug 'justinmk/vim-gtfo'
-    nnoremap gop <cmd>call gtfo#open#file(b:vimtex.viewer.out())<cr>
-    let g:gtfo#terminals = { 'mac': 'iterm' }
+nnoremap gop <cmd>call gtfo#open#file(b:vimtex.viewer.out())<cr>
+let g:gtfo#terminals = { 'mac': 'iterm' }
 
 
 Plug 'rafi/awesome-vim-colorschemes'
@@ -136,29 +164,45 @@ Plug 'rafi/awesome-vim-colorschemes'
 Plug 'tommcdo/vim-exchange'
 
 
-Plug 'ubaldot/vim-replica'
-    nmap <F3> <cmd>silent! ReplicaConsoleToggle<cr>
-    nmap <F4> <cmd>silent! ReplicaConsoleShutoff<cr>
-    nmap <F9> <cmd>ReplicaSendLines<cr>
-    xmap <F9> <cmd>ReplicaSendLines<cr>
-    vmap <F9> :ReplicaSendLines<cr>
-    nmap <F5> <cmd>ReplicaSendFile<cr>
-    nmap <F6> <C-W>H<cmd>vert resize +30<cr>
-    nmap <c-enter> <cmd>silent! ReplicaSendCell<cr>j
+" Plug 'ubaldot/vim-outline'
+"     nmap <silent> <space>O <Plug>OutlineRefresh
+"     nmap <silent> <space>o <Plug>OutlineGoToOutline
+Plug 'preservim/tagbar'
+nmap <F8> <cmd>TagbarOpen j<cr>
+nnoremap ]j <cmd>call tagbar#jumpToNearbyTag(1)<cr>
+nnoremap [j <cmd>call tagbar#jumpToNearbyTag(-1)<cr>
 
-Plug 'goerz/jupytext.vim'
-    let g:jupytext_fmt = 'py:percent'
+
+" Plug 'ubaldot/vim-replica'
+Plug 'luk400/vim-jukit'
+let g:jukit_shell_cmd = 'conda activate $ENVNAME; exec ipython '
+    let g:jukit_mpl_block = 0
+    let g:jukit_convert_overwrite_default = 1
+    let g:jukit_hl_extensions=['py']
+    let g:jukit_mappings = 0
+
+    if exists('$KITTY_WINDOW_ID')
+        let g:jukit_terminal = 'kitty'
+    endif
+
+    " let g:jukit_auto_output_hist = 1
+    " let g:jukit_inline_plotting=1
 
 Plug 'kana/vim-textobj-user'
-Plug 'GCBallesteros/vim-textobj-hydrogen'
+
+" Plug 'GCBallesteros/vim-textobj-hydrogen'
+" Plug 'goerz/jupytext.vim'
+"     let g:jupytext_fmt = 'py:percent'
 
 " Plug 'ubaldot/vim-conda-activate', { 'on': 'CondaActivate' }
 "     map <leader>ca <cmd>CondaActivate<cr>
 
 Plug 'vivekmyers/vim-conda', { 'on': ['CondaChangeEnv', 'CondaActivate'] }
     map <leader>ca <cmd>CondaChangeEnv<cr>
+    map <leader>ce :CondaActivate<space>
     map <leader>ci <cmd>Conda info<cr>
     command! -nargs=? Conda exe "Dispatch " . $CONDA_EXE . ' ' . <q-args>
+    let $ENVNAME = $CONDA_DEFAULT_ENV
     " let g:conda_startup_msg_suppress = 1
     " let g:conda_startup_wrn_suppress = 1
 
@@ -191,11 +235,13 @@ Plug 'gioele/vim-autoswap'
 
 Plug 'airblade/vim-rooter'
     let g:rooter_patterns = ['Makefile', '.git', '.hg', '.svn', '.bzr', '_darcs', '.root']
-    let g:rooter_patterns += ['>Overleaf', '>Documents', '>research', '>Documents/code']
+    let g:rooter_patterns += ['>Overleaf', '>Documents', '>research', '>Documents/code', '>papers']
 
 Plug 'lervag/vimtex'
-    let g:tex_flavor='latex'
-    let g:vimtex_quickfix_mode=0
+    let g:tex_flavor = 'latex'
+    let g:vimtex_quickfix_mode = 0
+    let g:vimtex_complete_ignore_case = 1
+    let g:vimtex_complete_smart_case = 1
     if has('unix')
         if has('mac')
             let g:vimtex_view_method = "skim"
@@ -218,7 +264,8 @@ Plug 'lervag/vimtex'
 
     " enable shell escape
     let g:vimtex_compiler_latexmk = {
-                \ 'aux_dir': '.build',
+                \ 'aux_dir': 'build',
+                \ 'out_dir': 'build',
                 \ 'options': [
                 \   '-use-make',
                 \   '-shell-escape',
@@ -303,8 +350,12 @@ Plug 'sirver/ultisnips'
     let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
 
 Plug 'github/copilot.vim'
-    imap <C-A> <Plug>(copilot-suggest)<Plug>(copilot-accept-word)
+    imap <C-A><C-A> <Plug>(copilot-suggest)<Plug>(copilot-accept-word)
+    imap <C-A><C-L> <Plug>(copilot-suggest)<Plug>(copilot-accept-line)
+    imap <C-A><C-S> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+    imap <C-A><C-N> <Plug>(copilot-suggest)<Plug>(copilot-next)
 
 Plug 'Matt-A-Bennett/vim-surround-funk'
 
 call plug#end()
+

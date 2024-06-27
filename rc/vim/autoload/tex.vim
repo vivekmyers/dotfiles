@@ -18,6 +18,10 @@ endfor
 let g:comment_regex = '\(^[^%]*\)\@<=\(' . g:comment_regex . '\)'
 
 
+function tex#comment_regex()
+    return g:comment_regex
+endfunction
+
 function tex#comments(filter = '')
     let prg = 'git grep -nI '
         \ . shellescape(substitute(g:comment_regex, '\\@<=', '', 'g'))
@@ -224,13 +228,14 @@ function tex#resetviewer()
                 set bounds of w to {1216, 25, 1920, 1080}
             end tell
         END
+        " call system('osascript -e ' . shellescape(join(script, "\r")))
     elseif n > 1
         let script =<< trim END
             tell application "System Events"
                 set n to number of items in windows of application "Skim"
 
                 set mv to front window of application "MacVim"
-                set bounds of mv to {0, 38, 1512, 980}
+                set bounds of mv to {0, 38, 1514, 980}
                 
                 set w to front window of application "Skim"
 
@@ -239,17 +244,34 @@ function tex#resetviewer()
                 repeat with i from 1 to n
                     set w to item i of windows_skim
                     if i = 1 then
-                        set bounds of w to {793, -1895, 1873, 0}
+                        set bounds of w to {770, -1895, 1850, 0}
                     else
                         if i mod 2 = 0 then
-                            set bounds of w to {-1127, -1055, -167, 0}
+                            set bounds of w to {-1150, -1055, -190, 0}
                         else
-                            set bounds of w to {-167, -1055, 793, 0}
+                            set bounds of w to {-190, -1055, 770, 0}
                         end if
                     end if
                 end repeat
             end tell
         END
+        " let script =<< trim END
+        "     mvid=$(yabai -m query --windows | jq '[.[] | select(.app=="MacVim")] | first | .id')
+        "     skimid=$(yabai -m query --windows | jq '[.[] | select(.app=="Skim")] | first | .id')
+        "     evenid=( $(yabai -m query --windows | jq '[.[] | select(.app=="Skim")] | to_entries | .[1:].[] | select(.key % 2 == 0) | .value.id') )
+        "     oddid=(  $(yabai -m query --windows | jq '[.[] | select(.app=="Skim")] | to_entries | .[1:].[] | select(.key % 2 == 1) | .value.id') )
+        "     yabai -m window "$mvid" --grid 1:1:0:0:1:1 
+        "     yabai -m window "$mvid" --grid 1:1:0:0:1:1 
+        "     yabai -m window "$skimid" --grid 1:1:0:0:1:1
+        "     yabai -m window "$skimid" --grid 1:1:0:0:1:1 
+        "     for i in "${evenid[@]}"; do
+        "         yabai -m window "$i" --grid 1:2:0:0:1:1 
+        "     done
+        "     for i in "${oddid[@]}"; do
+        "         yabai -m window "$i" --grid 1:2:0:1:1:1 
+        "     done
+        " END
+        " call system('bash -c ' . shellescape(join(script, "\n")))
     endif
 
     call system('osascript -e ' . shellescape(join(script, "\r")))

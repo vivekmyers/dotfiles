@@ -1,0 +1,15 @@
+#!/bin/bash
+
+x=( $(shortcuts run temperatures | cat) )
+
+case "$1" in
+    0)
+        echo "${x[0]:0:4}"
+        ;;
+    1)
+        echo "${x[1]:0:4}"
+        ;;
+    *)
+        echo "Invalid argument"
+        ;;
+esac

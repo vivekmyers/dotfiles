@@ -1,0 +1,12 @@
+#!/bin/bash
+
+name="$(basename $(pwd))_arXiv"
+rm -rf "$name"
+arxiv_latex_cleaner .
+mv "../$name" .
+cp build/*.bbl "$name"
+rm -f "$name/arxiv.zip" "$name/makefile" "$name/".*
+zip -r arxiv.zip "$name"
+rm -rf "$name"
+
+show arxiv.zip

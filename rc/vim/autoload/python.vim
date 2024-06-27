@@ -477,13 +477,9 @@ function python#notebooksetup()
         endif
     augroup END
 
-    if &foldmethod == 'expr'
-        setlocal foldmethod=manual
-    else
-        setlocal foldmethod=expr
-        setlocal foldexpr=python#ipynb_fold()
-        normal! zx
-    endif
+    setlocal foldmethod=expr
+    setlocal foldexpr=python#ipynb_fold()
+    normal! zx
     doautocmd BufWinEnter
 
     call textobj#user#plugin('python', {

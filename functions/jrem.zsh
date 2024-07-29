@@ -4,9 +4,14 @@ if [[ $# -lt 2 ]]; then
 fi
 
 (
-    ssh -t "$1" "~/conda/bin/zsh -lic 'cd ${3-.} && trun jupyter-$2 jupyter notebook --no-browser --port=$2'" || export SILENT=1
+    if ssh "$1" "nc -z localhost $2"; then
+        echo "Port $2 is already in use on $1"
+        export SILENT=1
+    else
+        ssh "$1" "~/conda/bin/zsh -lic 'cd ${3-.} && tkrun jupyter-$2 jupyter notebook --no-browser --port=$2'"
+    fi
     tunnel "$2" "$1" "$2" &&
     sleep 1 &&
-    ssh -t "$1" "~/conda/bin/zsh -lic 'jupyter server list'" | grep "localhost:$2" | cut -d' ' -f1
+    ssh "$1" "~/conda/bin/zsh -lic 'jupyter server list'" | grep "localhost:$2" | cut -d' ' -f1
 )
 

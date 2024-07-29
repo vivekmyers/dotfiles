@@ -73,3 +73,13 @@ nnoremap <buffer> <leader>bc <cmd>call bib#copy()<cr>
 nnoremap <buffer> <leader>bC <cmd>call bib#append()<cr>
 
 set tags+=,/usr/local/texlive/2022/texmf-dist/tags
+
+
+vmap Sm S$
+nmap dsm ds$
+nmap tsm ts$
+nmap yam ya$
+nmap yim yi$
+nmap ysim ysi$
+nmap ysam ysa$
+

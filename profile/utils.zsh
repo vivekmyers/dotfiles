@@ -29,31 +29,31 @@ function ml {
 
 function setup {
     if istpu "$1"; then
-        timeout 300 zsh -ic "setup_tpu $1"
+        timeout -s 9 300 zsh -ic "setup_tpu $1"
     else
-        timeout 300 zsh -ic "setup_base $1 $2 $3"
+        timeout -s 9 300 zsh -ic "setup_base $1 $2 $3"
     fi
 }
 
 function setup_base {
     local sock="$HOME/.ssh/sockets/setup:%r@%h:%p"
     ( flock -n 9 || { echo "Another setup is already running"; return 1; }
+      trap "rm -f ~/.local/var/$1.setup.lock" EXIT
       ( commit_config >~/.local/var/setup.$1.log 2>&1 & )
       ssh -nNM -S "$sock" "$1" &
       ssh -S "$sock" "$1" 'chown -R $USER ~/config ~/.ssh ~/.ssh/*'
       ssh -S "$sock" "$1" "chmod -R go-rwx ~/config ~/.ssh ~/.ssh/*"
-      trap "rm -f ~/.local/var/$1.setup.lock" EXIT
       ( cmd="cd ~/config && ( git commit -am. || true ) && git pull && git push && flock -n config.lock make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")"
-        ssh -S "$sock" -t "$1" "~/conda/bin/zsh -c $(printf "%q" $cmd)" || 
+        ssh -S "$sock" -t "$1" "~/conda/bin/zsh -c $(printf "%q" $cmd)" ||
         ( rsync -e "ssh -t -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/" &&
           ssh -t -S "$sock" "$1" "
             rm -f ~/.ssh/id_rsa ~/.ssh/id_rsa.pub ~/.ssh/config &&
-            cd ~/config && 
-            git reset --hard && 
-            git clean -df && 
+            cd ~/config &&
+            git reset --hard &&
+            git clean -df &&
             flock -n config.lock make ${2-all} $(test -n "$3" && echo "CONDA_PREFIX=$3")"
         )
-        ssh -t -S "$sock" "$1" "touch ~/. && ~/conda/bin/zsh -c commit_config"
+        ssh -t -S "$sock" "$1" "cd ~/config && touch ~/. && ~/conda/bin/zsh -ic commit_config"
       )
       ssh -O exit -S "$sock" "$1"
       ( commit_config >>~/.local/var/setup.$1.log 2>&1 & )
@@ -75,7 +75,7 @@ function setup_tpu {
         ssh -S "$sock" "$1" "chmod -R go-rwx ~/config ~/.ssh"
         ssh -S "$sock" -t "$1" "~/conda/bin/zsh -lc $(printf "%q" $cmd)" || (
             rsync -e "ssh -t -S $sock" -Oavz --delete --exclude cache ~/config/ "$1:~/config/"
-            ssh -t -S "$sock" "$1" "cd ~/config && flock -n config.lock make all CONDA_PREFIX=$CONDALOC" 
+            ssh -t -S "$sock" "$1" "cd ~/config && flock -n config.lock make all CONDA_PREFIX=$CONDALOC"
         )
         ssh -t -S "$sock" "$1" "cd $CONDALOC/.. && zsh -ic mkhome"
       )

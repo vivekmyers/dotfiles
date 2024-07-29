@@ -11,5 +11,5 @@ ctrl + alt - 8 : yabai -m window --space 8 --focus
 ctrl + alt - 9 : yabai -m window --space 9 --focus
 ctrl - 0 : yabai -m window --focus east
 ctrl - 9 : yabai -m window --focus west
-ctrl - f2 : nno
+ctrl - f3 : nno
 

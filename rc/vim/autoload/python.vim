@@ -34,17 +34,16 @@ function python#addargument()
     let curpos = getpos('.')
     let arg = expand('<cword>')
     execute "normal vafo\e"
-    sleep 100m
     if search('\%<''>def .*(\%>''<', 'c') == 0
         echoerr 'No function definition found'
         return
     endif
-    sleep 100m
     call search('=\|\(:$\)', 'c')
     if getline('.') =~ '()'
         execute 'normal 0f(a' . arg
     else
-        execute "normal vala\e"
+        call search('.,', 'bcW')
+        execute "normal vaa\e"
         if getline('.') =~ '.*, *$'
             execute 'normal o' . arg . ",\e"
         else
@@ -77,12 +76,10 @@ function python#addmember()
     let curpos = getpos('.')
     let arg = expand('<cword>')
     execute "normal vaco\e"
-    sleep 100m
     if search('\%>''<\%<''>def __init__', 'c') == 0
         echoerr 'No __init__ definition found'
         return
     endif
-    sleep 100m
     execute "normal vif\e"
     execute 'normal oself.' . arg . ' = ' . arg . "\e"
     call python#addargument()
@@ -162,12 +159,12 @@ endfunction
 
 function python#togglemember()
     let pos = getpos('.')
-    let selfpos = search('\%.l\%<.cself\.\(\k\+\)\%>.c', 'nc')
-    let noself = search('\%.l\%<.c\(\k\+\)\%>.c', 'nc')
+    let selfpos = search('\%.l\%<.c.\?\zsself\.\(\k\+\)\%>.c', 'nc')
+    let noself = search('\%.l\%<.c.\?\zs\(\k\+\)\%>.c', 'nc')
     if selfpos != 0
-        execute selfpos . 's/\%.l\%<.cself\.\(\k\+\)\%>.c/\1/'
+        execute selfpos . 's/\%.l\%<.c.\?\zsself\.\(\k\+\)\%>.c/\1/'
     elseif noself != 0
-        execute noself . 's/\%.l\%<.c\(\k\+\)\%>.c/self.\1/'
+        execute noself . 's/\%.l\%<.c.\?\zs\(\k\+\)\%>.c/self.\1/'
     else
         echoerr 'No var found'
     endif

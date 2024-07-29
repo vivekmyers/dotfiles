@@ -127,6 +127,7 @@ catch {
 
 catch wait result
 exit [lindex $result 3]
+
 EOF
 
 function ssh_wrapper {

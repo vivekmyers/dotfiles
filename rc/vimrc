@@ -15,15 +15,11 @@ nmap <F10> :wall<cr>
 nnoremap <C-D> <cmd>call utils#closenext()<cr>
 inoremap <C-D> <C-O><cmd>call utils#closenext()<cr>
 nnoremap <C-S><C-Q> <cmd>qa<cr>
-nmap <C-S>/ <cmd>bd<cr>
-imap <C-S>/ <C-O><cmd>bd<cr>
 nmap <C-S><C-R> <cmd>call utils#reload()<cr>
-map <F2> <C-S>/
-imap <F2> <C-S>/
-map <leader><F2> <C-S>\
+map <F2> <cmd>bd<cr><C-L>
+imap <F2> <C-O><cmd>bd<cr><C-L>
 nnoremap <leader>q <cmd>try<bar>write<bar>catch<bar>endtry<bar>b#<bar>bd#<cr>
 nnoremap <leader>Q <cmd>b#<bar>bd#<cr>
-nnoremap <C-F2> <cmd>Dispatch nno<cr>
 noremap <C-6> <C-^>
 map <leader>so :w<cr>:source %<cr>
 map + <C-W>+<C-W>>
@@ -42,12 +38,12 @@ tnoremap  <silent> <C-Q> <C-W>:bnext<cr>
 " edit configs
 noremap <C-N><C-N> <cmd>e $CONFIGDIR/rc/vimrc<cr>
 noremap <C-N><C-G> <cmd>e $CONFIGDIR/rc/gvimrc<cr>
-noremap <C-N><C-G> <cmd>e $CONFIGDIR/rc/vim/plugin/plugins.vim<cr>
+noremap <C-N><C-G> <cmd>e $CONFIGDIR/rc/vim/autoload/plugins.vim<cr>
 noremap <C-N><C-F> <cmd>call utils#fileconf()<cr>
 noremap <C-N><C-A> <cmd>call utils#autoconf()<cr>
 noremap <C-N><C-S> <cmd>call utils#snipconf()<cr>
 noremap <C-N><C-M> <cmd>e makefile<cr>
-noremap <C-N><C-P> <cmd>e $CONFIGDIR/rc/vim/plugin/load.vim<cr>
+noremap <C-N><C-P> <cmd>e $CONFIGDIR/rc/vim/autoload/load.vim<cr>
 noremap <C-N><C-R> <cmd>Dispatch commit_config<cr>
 nnoremap <C-N><C-L> <cmd>call utils#localconf()<cr>
 nnoremap goo <cmd>call utils#gotosymlink()<cr>
@@ -67,12 +63,18 @@ nnoremap <leader>kc <cmd>!pkill -f ctags<cr>
 nnoremap ,e <cmd>Explore<cr>
 nnoremap ,r :RemoteExplore <up>
 nnoremap ,p <cmd>Explore ~/papers<cr>
+nnoremap ,o :Note<space>
 command! -nargs=* RemoteExplore call utils#remote(<f-args>)
+command! -nargs=* Note call utils#note(<f-args>)
+cabbrev note Note
 
 " command! -nargs=* SearchFiles call utils#searchfiles(<f-args>)
 " command! -nargs=* FindFiles call utils#findfiles(<f-args>)
 " nnoremap <F12> :SearchFiles<space>
 " nnoremap <F11> :FindFiles<space>
+
+source ~/.vim/autoload/load.vim
+source ~/.vim/autoload/plugins.vim
 
 nmap ,f <cmd>!open %:h<cr>
 nmap ,n <cmd>NERDTreeFind<cr>
@@ -90,6 +92,7 @@ set exrc
 
 nmap <leader>z <cmd>call zotero#openref()<cr>
 nmap <leader>Z <cmd>call zotero#copyref()<cr>
+nmap <leader>e <cmd>call zotero#select()<cr>
 
 syntax enable
 set tabstop=4
@@ -101,9 +104,6 @@ filetype indent on
 set completeopt=longest,menuone,noinsert
 
 " inoremap <expr> <cr> getline('.') =~ '\item $' ? '<c-w><c-w>' : '<cr>'
-
-" load plugins
-source ~/.vim/autoload/plugins.vim
 
 set background=dark
 try

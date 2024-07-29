@@ -1,3 +1,16 @@
+function zotero#select()
+    let l:title = zotero#copyref()
+    if l:title == ''
+        return
+    endif
+    let l:pat = substitute(l:title[:30], '[^a-zA-Z0-9]', '*', 'g')
+    let l:pdf = systemlist('find ~/Zotero/storage -iname "*' . l:pat . '*.pdf"')
+    if l:pdf != []
+        let l:id = matchstr(l:pdf[0], '[^/]\+\ze/[^/]\+\.pdf')
+        silent! call system('open zotero://select/library/items/' . l:id)
+    endif
+endfunction
+
 function zotero#openref()
     let l:title = zotero#copyref()
     if l:title == ''

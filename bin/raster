@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+
+INPUT_FILE="$1"
+OUTPUT_FILE="${2-$1}"
+DPI="${3-800}"
+tmp=$(mktemp -d)
+
+gs -o /$tmp/onlytxt.pdf -sDEVICE=pdfwrite -dFILTERVECTOR -dFILTERIMAGE $INPUT_FILE && \
+gs -o /$tmp/graphics.pdf -sDEVICE=pdfwrite -dFILTERTEXT $INPUT_FILE && \
+convert -density $DPI -quality 100 /$tmp/graphics.pdf /$tmp/graphics.png && \
+convert -density $DPI -quality 100 /$tmp/graphics.png /$tmp/graphics.pdf && \
+rm -f "$OUTPUT_FILE" && \
+pdftk /$tmp/graphics.pdf stamp /$tmp/onlytxt.pdf output $OUTPUT_FILE && \
+rm /$tmp/onlytxt.pdf /$tmp/graphics.pdf /$tmp/graphics.png

@@ -136,7 +136,7 @@ conda: $(CONDA) $(HOME)/conda $(TOOLS) ;
 
 vim: $(HOME)/.vimrc $(HOME)/.vim/plug.log $(HOME)/.vim/tags
 
-$(HOME)/.vim/plug.log: $(HOME)/.vim/plugin/load.vim $(BIN)/vim $(HOME)/.vim/autoload/plug.vim
+$(HOME)/.vim/plug.log: $(HOME)/.vim/autoload/load.vim $(BIN)/vim $(HOME)/.vim/autoload/plug.vim
 	rm -f $@
 	$(BIN)/vim +'PlugInstall --sync' +"w $@" +qall 1>/dev/null
 	cat $@

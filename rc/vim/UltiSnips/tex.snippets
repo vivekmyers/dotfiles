@@ -94,10 +94,10 @@ snippet stand "Standalone template" b
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
+\usepackage[dvipsnames]{xcolor}
 \usepackage{tikz}
 \usepackage{tikz-cd}
 \usepackage{graphicx}
-\usepackage[dvipsnames]{xcolor}
 
 \begin{document}
 	$0
@@ -269,6 +269,12 @@ snippet dm "Math" wA
 \[
 ${1:${VISUAL}}
 \] $0
+endsnippet
+
+snippet eqn "Align" bA
+\begin{equation}
+	${1:${VISUAL}}
+\end{equation}
 endsnippet
 
 snippet ali "Align" bA
@@ -605,7 +611,7 @@ endsnippet
 
 context "math()"
 snippet norm "norm" iA
-\|$1\|$0
+\|${1:${VISUAL}}\|$0
 endsnippet
 
 priority 100
@@ -616,7 +622,7 @@ endsnippet
 
 priority 100
 context "math()"
-snippet '(?<![\\a-zA-Z])(mu|xi|sigma|varepsilon|alpha|omega|lambda|beta|zeta|nu|theta|psi|phi|rho|epsilon|varphi|gamma|delta|tau)' "greek" rwA
+snippet '(?<![\\a-zA-Z])(mu|xi|sigma|varepsilon|alpha|omega|lambda|beta|zeta|nu|theta|psi|phi|rho|epsilon|varphi|gamma|ell|delta|tau)' "greek" rwA
 \\`!p snip.rv = match.group(1)`
 endsnippet
 
@@ -780,6 +786,11 @@ snippet tt "text" iA
 endsnippet
 
 context "math()"
+snippet rm "text" i
+\mathrm{${1:${VISUAL}}}$0
+endsnippet
+
+context "math()"
 snippet op "operatorname" i
 \operatorname{${1:${VISUAL}}}($2)$0
 endsnippet
@@ -813,6 +824,12 @@ priority 10
 context "math()"
 snippet "bar" "bar" riA
 \overline{${1:${VISUAL}}}$0
+endsnippet
+
+priority 10
+context "math()"
+snippet "tilde" "tilde" riA
+\tilde{${1:${VISUAL}}}$0
 endsnippet
 
 priority 100

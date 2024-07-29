@@ -150,3 +150,36 @@ function utils#gotosymlink()
         endif
     endif
 endfunction
+
+function utils#note(...)
+    if a:0 == 0
+        Explore ~/Documents/notes
+        return
+    else
+        let note = a:1
+    endif
+    let l:dir = '~/Documents/notes/' . note
+    let l:file = '~/Documents/notes/' . note . '/' . note . '.tex'
+    if filereadable(expand(l:file))
+        exe 'e ' . l:file
+    else
+        call system('mkdir -p ' . l:dir)
+        call system('cd ' . l:dir . ' && touch ' . note . '.tex && git init && touch references.bib && git add * && git commit -m "Initial commit"')
+        exe 'e ' . l:file
+        exe 'cd ' . l:dir
+        call feedkeys("idoc\<C-R>=UltiSnips#ExpandSnippetOrJump()\<CR>")
+    endif
+endfunction
+
+
+function utils#dircmd(cmd)
+    if &ft ==# "netrw"
+        normal cd
+        let l:pwd = getcwd()
+        tabnew
+        exe 'cd ' . l:pwd
+    endif
+    exe a:cmd
+    write
+    AirlineRefresh
+endfunction

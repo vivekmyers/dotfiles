@@ -62,12 +62,13 @@ function python#addflag()
         q
     endtry
     exe 'normal O' . 'parser.add_argument(''--' . arg . ''','
-    try
-        let finish = copilot#Complete()['completions'][0]['displayText']
-        exe 'normal A' . finish
-    catch
-        echoerr 'No completion found'
-    endtry
+    " try
+        normal $
+        let finish = copilot#Complete()['items'][0]['insertText']
+        exe 'normal cc' . finish
+    " catch
+    "     echoerr 'No completion found'
+    " endtry
 endfunction
 
 
@@ -325,29 +326,38 @@ endfunction
 function python#around_cell()
     let lnum = line('.')
     if search('^#.\?.\?%%', 'bcW') == 0
-        return 0
+        0
     endif
     let start = getpos('.')
     if search('^#.\?.\?%%', 'W') == 0
+        $
+    else
+        -1
+    endif
+    let end = getpos('.')
+    if end[1] == line('$') && start[1] == 0
         return 0
     endif
-    -1
-    let end = getpos('.')
     return ['V', start, end]
 endfunction
 
 function python#inner_cell()
     let lnum = line('.')
     if search('^#.\?.\?%%', 'bcW') == 0
-        return 0
+        0
+    else
+        +1
     endif
-    +1
     let start = getpos('.')
     if search('^#.\?.\?%%', 'W') == 0
+        $
+    else
+        -1
+    endif
+    let end = getpos('.')
+    if end[1] == line('$') && start[1] == 0
         return 0
     endif
-    -1
-    let end = getpos('.')
     return ['V', start, end]
 endfunction
 
@@ -414,7 +424,7 @@ function python#notebooksetup()
         call jukit#send#send_to_split(python#word(a:mode))
     endfun
     function! s:getshape(mode)
-        let cmd = 'import jax; jax.tree_map(lambda x: x.shape if hasattr(x, "shape") else type(x), ' . python#word(a:mode) . ')'
+        let cmd = 'import jax; jax.tree_util.tree_map(lambda x: x.shape if hasattr(x, "shape") else type(x), ' . python#word(a:mode) . ')'
         call jukit#send#send_to_split(cmd)
     endfun
 

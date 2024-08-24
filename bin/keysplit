@@ -38,10 +38,10 @@ osascript -e "$script" "$path" "$dir/$name.pdf" || exit 1
 rm -f "$out"/slide*.pdf
 mkdir -p "$out" 2>/dev/null
 pdfseparate "$name.pdf" "$out/slide%d.pdf"
-# for i in "$out"/slide*.pdf; do
-#     pdfcrop "$i" "$i" &
-# done
+for i in "$out"/slide*.pdf; do
+    pdfcrop "$i" "$i" &
+done
 wait
-rm "$name.pdf"
+rm -f "$name.pdf"
 
 

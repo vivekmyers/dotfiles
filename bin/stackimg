@@ -1,0 +1,46 @@
+#!/bin/bash
+
+
+op="+append"
+d=20
+
+function dim {
+    echo "${d}x0+0+10"
+}
+
+while :; do
+    case $1 in
+        -v)
+            op="-append"
+            function dim {
+                echo "0x${d}+10+0"
+            }
+            shift
+            ;;
+        -d)
+            d=$2
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+
+out="$1"
+shift
+
+inp=()
+
+for i in $@; do
+    if [[ "$i" = "$out" ]]; then
+        continue
+    fi
+    inp+=("$i")
+done
+
+convert \( "${inp[@]}" \
+            -background white -splice $(dim)  \) \
+            -gravity Center $op \
+            -gravity SouthEast -splice $(dim) $out

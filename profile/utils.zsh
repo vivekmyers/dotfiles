@@ -177,7 +177,7 @@ function xlink {
     for x in "$@"; do
         cmd="$(readlink -f $(which "$x"))"
         if [[ -x "$cmd" ]]; then
-            ln -sf "$cmd" "$HOME/.local/bin/$x"
+            ln -sf "$cmd" "$HOME/.local/bin/$(basename $x)"
         else
             echo "Command not found: $x"
             return 1
@@ -235,7 +235,7 @@ function znew {
     vim "$target"
 
     [[ -f "$target" ]] &&
-    commit_config "$1" &&
+    ( commit_config >~/.local/var/znew.$1.log 2>&1 & ) &&
     { ! command -v "$1" || unset -f "$1" ; } &&
     autoload -Uz "$1" &&
     rehash
@@ -246,16 +246,17 @@ function xnew {
         echo "Usage: xnew <name>"
         return 1
     fi
-    target="$CONFIGDIR/bin/$1"
+    local target="$CONFIGDIR/bin/$1"
+    local extra=""
     if [[ ! -e "$target" ]]; then
-        extra=+"norm! i#!/bin/bashcc"
+        local extra=+"norm! i#!/bin/bashcc"
     fi
     vim +"set ft=bash" $extra "$target"
 
     [[ -f "$target" ]] &&
     chmod +x "$target" &&
     rehash &&
-    commit_config "$1"
+    ( commit_config >~/.local/var/xnew.$1.log 2>&1 & )
 }
 
 function libnew {

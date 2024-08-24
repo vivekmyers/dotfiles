@@ -23,6 +23,7 @@ nnoremap <buffer> <space>C O%%<C-R>=tex#stamp()<cr>:<space>
 vnoremap <buffer> <space>c :v/^\s*%%VM/v/^\s*$/norm I%%<C-R>=tex#stamp()<cr>:<space><esc>:noh<cr>
 
 nmap <buffer> <C-S>; <cmd>silent! wall<bar>call vimtex#compiler#start()<cr>
+nmap <buffer> <C-S><C-E> <cmd>VimtexStopAll<cr>
 imap <buffer> <C-S>; <C-O><cmd>silent! wall<bar>call vimtex#compiler#start()<cr>
 nmap <buffer> <C-S>= <cmd>silent! w<cr><cmd>VimtexCompileSS<cr>
 
@@ -62,17 +63,14 @@ augroup END
 
 nmap <buffer> tsV <cmd>call tex#vertsub('Vert','\\\|')<cr>
 nmap <buffer> tsv <cmd>call tex#vertsub('vert','\|')<cr>
-nmap <buffer> <C-S><C-K> <cmd>call tex#resetviewer()<cr>
-nmap <buffer> <C-S><C-A> <cmd>call tex#main()<cr>
+nmap <buffer> <C-S><C-K> <cmd>call tex#resetviewer(1)<cr>
+nmap <buffer> <F5> <cmd>call tex#resetviewer(1)<cr>
+nmap <buffer> <F5> <cmd>call tex#resetviewer(1)<cr>
+map <buffer> <C-K> <cmd>call tex#resetviewer(0)<cr>
 
 vmap <buffer> Sc <plug>(vimtex-cmd-create)
 
-nnoremap <buffer> <leader>ba <cmd>call bib#addref()<cr>
-nnoremap <buffer> <leader>bo <cmd>call bib#open()<cr>
-nnoremap <buffer> <leader>bc <cmd>call bib#copy()<cr>
-nnoremap <buffer> <leader>bC <cmd>call bib#append()<cr>
-
-set tags+=,/usr/local/texlive/2022/texmf-dist/tags
+setlocal tags+=,/usr/local/texlive/2022/texmf-dist/tags
 
 
 vmap Sm S$
@@ -83,3 +81,19 @@ nmap yim yi$
 nmap ysim ysi$
 nmap ysam ysa$
 
+function! s:sentencebreak(start, end)
+    call feedkeys('m]m[')
+    let last = stridx(getline(a:start), '%')
+    if last == -1
+        let last = line('$')
+    endif
+    silent! call feedkeys(':'.a:start.','.a:end.'s/\%<'.last.'c[.!?]\zs[[:space:]]\+\($\)\@!/\r/ge')
+    call feedkeys('gp=')
+    silent! call feedkeys(':noh|echo ""')
+endfunction
+
+setlocal formatexpr=<sid>sentencebreak(v:lnum,v:lnum+v:count-1)
+nmap <buffer> <space>ks :call system('pkill Skim')<cr>
+
+command Arxiv Dispatch arxiv
+cabbrev arxiv Arxiv

@@ -154,6 +154,7 @@ endfunction
 function utils#note(...)
     if a:0 == 0
         Explore ~/Documents/notes
+        call feedkeys("s")
         return
     else
         let note = a:1
@@ -171,6 +172,28 @@ function utils#note(...)
     endif
 endfunction
 
+function utils#fig(...)
+    if a:0 == 0
+        Explore ~/Documents/notes
+        call feedkeys("s")
+        return
+    else
+        let note = a:1
+    endif
+    let l:dir = '~/Documents/notes/' . note
+    let l:file = '~/Documents/notes/' . note . '/' . note . '.tex'
+    if filereadable(expand(l:file))
+        exe 'e ' . l:file
+    else
+        call system('mkdir -p ' . l:dir)
+        call system('cd ' . l:dir . ' && touch ' . note . '.tex && git init && touch references.bib && git add * && git commit -m "Initial commit"')
+        exe 'e ' . l:file
+        exe 'cd ' . l:dir
+        call feedkeys("istand\<C-R>=UltiSnips#ExpandSnippetOrJump()\<CR>")
+    endif
+endfunction
+
+
 
 function utils#dircmd(cmd)
     if &ft ==# "netrw"
@@ -182,4 +205,22 @@ function utils#dircmd(cmd)
     exe a:cmd
     write
     AirlineRefresh
+endfunction
+
+function utils#leftview()
+    silent! Tmux move-pane -L
+    silent! Tmux select-layout main-vertical
+    silent! Tmux move-pane -L
+    let width = str2nr(trim(execute('silent! Tmux display -p \#{window_width}')))
+    exe 'silent! Tmux resize-pane -x ' . float2nr(width - 40 - 2*sqrt(width))
+    silent! Tmux select-pane -L
+    let winno = winnr()
+    silent! windo wincmd J
+    exe winno . 'wincmd w'
+    silent! wincmd H
+    silent! wincmd =
+    sleep 100m
+    silent! Tmux select-pane -L
+    silent! exe 'vert resize ' . float2nr(&columns - 40 - 3*sqrt(&columns))
+    normal! zz
 endfunction

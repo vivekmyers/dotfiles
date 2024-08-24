@@ -18,9 +18,11 @@
 	defaultBranch = master
 [push]
 	default = simple
+	autoSetupRemote = 1
 [core]
 	precomposeunicode = false
 	fileMode = false
+	excludesFile = ~/.gitignore
 [credential]
 	helper = store
 [http]

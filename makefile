@@ -11,8 +11,8 @@ LN = ln -sf
 
 CONDA_CLI = vim conda-minify black pipx flake8 mypy pylint isort \
 			pipdeptree pipreqs autopep8 openai jupyter tmux curl git \
-			ipython jq nvitop prettier
-CONDA_PKG = nodejs imagemagick magic-wormhole jedi
+			ipython jq nvitop prettier gh
+CONDA_PKG = nodejs imagemagick magic-wormhole jedi moreutils
 PIP_CLI = imgcat autoimport arxiv_latex_cleaner
 EXTRA_CLI = wormhole node
 

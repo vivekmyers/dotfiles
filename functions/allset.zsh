@@ -12,6 +12,7 @@ hosts=(
     vrbm.net
     eecs
     shallow
+    dgx
 )
 
 tpus=(

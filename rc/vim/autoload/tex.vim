@@ -9,7 +9,11 @@ let g:tex_comment_people =<< trim END
     ben
     billz
     dorsa
+    michal
+    kucil
 END
+
+let g:exclude_regex = '\[resolved.*\]\|^[[:space:]]*\\def\|^[[:space:]]*\\[[:alpha:]]*command'
 
 let g:comment_regex = g:tex_comment_regex
 for person in g:tex_comment_people
@@ -25,7 +29,7 @@ endfunction
 function tex#comments(filter = '')
     let prg = 'git grep -nI '
         \ . shellescape(substitute(g:comment_regex, '\\@<=', '', 'g'))
-        \ . ' | grep -v ''\[resolved.*\]'''
+        \ . ' | grep -v ' . shellescape(g:exclude_regex)
     if a:filter != ''
         let l:prg = l:prg . ' | grep ' . shellescape(a:filter)
     endif
@@ -56,16 +60,24 @@ function tex#togresolve()
 endfunction
 
 function tex#nextcomment()
+    let pos = getcurpos()
     call search(g:comment_regex, 'W')
-    while getline('.') =~ '\[resolved.*\]'
-        call search(g:comment_regex, 'W')
+    while getline('.') =~ g:exclude_regex
+        if search(g:comment_regex, 'W') == 0
+            call setpos('.', pos)
+            break
+        endif 
     endwhile
 endfunction
 
 function tex#prevcomment()
+    let pos = getcurpos()
     call search(g:comment_regex, 'bW')
-    while getline('.') =~ '\[resolved.*\]'
-        call search(g:comment_regex, 'bW')
+    while getline('.') =~ g:exclude_regex
+        if search(g:comment_regex, 'bW') == 0
+            call setpos('.', pos)
+            break
+        endif
     endwhile
 endfunction
 
@@ -173,19 +185,39 @@ function tex#overleaf()
 endfunction
 
 function tex#main()
-    exe 'edit ' . b:vimtex.tex
+    if exists('b:vimtex.tex')
+        exe 'edit ' . b:vimtex.tex
+    else
+        let l:tex = glob('*.tex', 0, 1)
+        if len(l:tex) == 0
+            echo 'No TeX file found'
+            return
+        endif
+        exe 'edit ' . l:tex[0]
+        if exists('b:vimtex')
+            exe 'edit ' . b:vimtex.tex
+        endif
+    endif
 endfunction
 
 
-function tex#resetviewer()
+function tex#resetviewer(compile)
     wall
     let spc = trim(system('yabai -m query --spaces --window | jq ".[].index"'))
     let cmd = 'yabai -m query --windows | jq ''.[] | select(.app == "Skim" and .space != '.spc.' and (.["is-visible"] | not)) | .id'' | xargs -I{} -n1 yabai -m window {} --space '.spc.' --focus'
     call system("bash -c " . shellescape(cmd))
 
-    call system('osascript -e "tell application \"Skim\" to activate"')
+    let script =<< trim END
+        tell application "System Events"
+            activate application "Skim"
+            key code 36
+        end tell
+    END
+    call system('osascript -e ' . shellescape(join(script, "\r")))
 
-    call vimtex#compiler#start()
+    if a:compile
+        call vimtex#compiler#start()
+    endif
     call tex#view()
     " call system('osascript -e "tell application \"Skim\" to quit"')
     let script =<< trim END

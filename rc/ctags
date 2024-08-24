@@ -24,10 +24,11 @@
 --regex-bib=/^@unpublished\{([^,]*)/\1/u,unpublished/i
 --regex-tex2=/^[^%]*\\label[ \t]*\*?\{[ \t]*([^}]*)\}/\1/l,label/
 --regex-tex2=/^[^%]*\\[a-z@]*def[ \t]*\*?\\([a-zA-Z@]*)/\1/d,def/
+--regex-tex2=/^[^%]*\\new[a-z]*[ \t]*\\([a-zA-Z@]*)/\1/d,def/
 --regex-tex2=/^[^%]*\\(renew|new|provide)command[ \t]*\*?\{?[ \t]*\\([a-zA-Z@]*)/\2/d,def/
 --regex-tex2=/^[^%]*\\(renew|new)environment[ \t]*\*?\{[ \t]*([a-zA-Z]*)/\2/d,def/
 --regex-tex2=/^[^%]*\\newtheorem[ \t]*\*?\{[ \t]*([a-zA-Z]*)/\1/d,def/
 --regex-tex2=/^[^%]*\\DeclarePairedDelimiter.[ \t]*\{?[ \t]*\\([a-zA-Z@]*)/\1/d,def/
 --regex-tex2=/^[^%]*\\let[ \t]*\*?\\([a-zA-Z@]*)/\1/d,def/
---regex-tex2=/^[^%]*\\definecolor[ \t]*\{([a-zA-Z@]*)/\1/d,def/
---regex-tex2=/^[^%]*\\colorlet[ \t]*\{([a-zA-Z@]*)/\1/d,def/
+--regex-tex2=/^[^%]*\\definecolor[ \t]*\{([a-zA-Z0-9@]*)/\1/d,def/
+--regex-tex2=/^[^%]*\\colorlet[ \t]*\{([a-zA-Z0-9@]*)/\1/d,def/

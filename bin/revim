@@ -1,0 +1,15 @@
+#!/bin/bash
+
+
+
+
+skhd -k 'esc'
+skhd -k 'ctrl - s'
+skhd -k 'ctrl - s'
+sleep 0.2
+skhd -k 'f6'
+sleep 0.2
+skhd -k 'cmd - n'
+sleep 0.7
+skhd -k 'ctrl - s'
+skhd -k 'ctrl - l'

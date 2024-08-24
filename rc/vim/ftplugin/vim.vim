@@ -1,2 +1,2 @@
 
-set tags+=~/.vim/tags
+setlocal tags+=~/.vim/tags

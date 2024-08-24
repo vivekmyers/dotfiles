@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function split {
+    src="$1"
+    base="${src%.*}"
+    if [[ ! -f "$src" ]]; then
+        echo "No file: $src"
+        return
+    fi
+
+    mkdir -p "$base"
+    rm -f "$base/frame"*".png"
+
+    ffmpeg -i "$src" -r "${2-10}" "$base/frame%04d.png"
+}
+
+rate=10
+if [[ "$1" == "-r" ]]; then
+    rate="$2"
+    shift 2
+elif [[ "$1" =~ ^[.0-9]+$ ]]; then
+    rate="$1"
+    shift
+fi
+
+for src in "$@"; do
+    split "$src" "$rate"
+done

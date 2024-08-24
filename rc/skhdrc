@@ -12,4 +12,7 @@ ctrl + alt - 9 : yabai -m window --space 9 --focus
 ctrl - 0 : yabai -m window --focus east
 ctrl - 9 : yabai -m window --focus west
 ctrl - f3 : nno
-
+cmd + alt - tab : yabai -m window --focus
+ctrl - f6 [
+    "MacVim": revim
+]

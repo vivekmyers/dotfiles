@@ -13,6 +13,7 @@ Plug 'kana/vim-textobj-line'
 Plug 'kana/vim-textobj-user'
 
 Plug 'c0r73x/vimdir.vim'
+Plug 'voldikss/vim-translator'
 
 Plug 'mbbill/undotree'
 Plug 'joom/latex-unicoder.vim'
@@ -101,8 +102,15 @@ Plug 'dense-analysis/ale'
 Plug 'altercation/vim-colors-solarized'
 Plug 'alvan/vim-closetag'
 
+Plug 'voldikss/vim-translator'
 Plug 'sirver/ultisnips'
 Plug 'github/copilot.vim'
+
+Plug 'vim-scripts/cmdalias.vim'
+Plug 'dohsimpson/vim-macroeditor'
+Plug 'tommcdo/vim-express'
+Plug 'christoomey/vim-titlecase'
+
 
 call plug#end()
 

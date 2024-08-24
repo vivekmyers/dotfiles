@@ -26,8 +26,18 @@ nmap <space>s <cmd>Scratch<cr>
 nmap <space>S <cmd>ScratchInsert<cr>
 
 "Plug 'zenbro/mirror.vim'
-let g:mirror#spawn_command = ':Start '
+let g:mirror#spawn_command = ':Zsh '
 
+augroup mirror
+    autocmd!
+    au VimEnter * Alias mcon MirrorConfig
+    au VimEnter * Alias menv MirrorEnvironment!
+    au VimEnter * Alias ssh MirrorSSH
+    au VimEnter * Alias mps MirrorPush
+    au VimEnter * Alias mpl MirrorPull
+    au VimEnter * Alias mdiff MirrorDiff
+    au VimEnter * Alias medit MirrorEdit
+augroup END
 
 "Plug 'trapd00r/vim-syntax-vidir-ls'
 "Plug 'kana/vim-textobj-line'
@@ -51,6 +61,10 @@ let g:unicode_map = {
 
 
 "Plug 'wellle/targets.vim'
+autocmd User targets#mappings#user call targets#mappings#extend({
+    \ 'a': {'argument': [{'o': '[([{]', 'c': '[])}]', 's': ','}]},
+    \ })
+
 "Plug 'mhinz/vim-grepper'
 augroup grepper
     autocmd!
@@ -61,6 +75,7 @@ augroup END
 vmap <F12> <plug>(GrepperOperator)
 nmap <F12> <cmd>Grepper -highlight -tool git -grepprg git grep -niI '$*'<cr>
 nmap <F11> <cmd>Grepper -highlight -tool git -grepprg git ls-files <bar> grep -i '$*'<cr>
+
 
 " Plug 'airblade/vim-gitgutter'
 " git@github.com:moll/vim-bbye.git
@@ -82,29 +97,51 @@ nnoremap <leader>g :G
 " nnoremap <leader>s <cmd>vert G<cr>
 " nnoremap <leader>S <cmd>G<cr>
 nnoremap <space>ac :call <sid>autocommit()<cr>
-nnoremap <space>ga :Git add %:p<CR><CR>
-nnoremap <space>gs :vert Git<CR>
-nnoremap <space>gc :Git commit -v -q<CR>
-nnoremap <space>gt :Git commit -v -q %:p<CR>
-nnoremap <space>gd :Gvdiffsplit<CR>
-nnoremap <space>gD :Gvdiffsplit<space>
-nnoremap <space>gk :G blame<CR>
-nnoremap <space>ge :Gedit<CR>
-nnoremap <space>gr :Gread<CR>
-nnoremap <space>gw :Gwrite<CR><CR>
-nnoremap <space>gl :vert silent! Git log<CR>
-nnoremap <space>gp :Ggrep<Space>
-nnoremap <space>gm :GMove<Space>
+nnoremap <space>ga :Git add %:p<cr><cr>
+nnoremap <space>gs :vert Git<cr>
+nnoremap <space>gc :Git commit -v -q<cr>
+nnoremap <space>gC :Git commit --amend -v -q<cr>
+nnoremap <space>gt :Git commit -v -q %:p<cr>
+nnoremap <space>gd :Gvdiffsplit<cr>
+nnoremap <space>gv :Gvdiffsplit<space>
+nnoremap <space>gk :Git blame<cr>
+nnoremap <space>ge :Gedit<cr>
+nnoremap <space>gr :Gread<cr>
+nnoremap <space>gw :Gwrite<cr>
+nnoremap <space>gl :vert silent! Git log<cr>
+nnoremap <space>gp :Ggrep<space>
+nnoremap <space>gm :GMove<space>
 " nnoremap <space>gb :Git branch<Space>
-nnoremap <space>go :Git checkout<Space>
-nnoremap <space>gps :Dispatch! git push<CR>
-nnoremap <space>gpl :Dispatch! git pull<CR>
-map <space>gb :GBrowse!<CR>
-map <space>gB :GBrowse<CR>
-nnoremap <space>gh :.Gclog<CR>
-nnoremap <space>gH :0Gclog<CR>
-nnoremap <space>g<space> :G<Space>
-nnoremap <space>v<space> :vert G<Space>
+nnoremap <space>go :Git checkout<space>
+nnoremap <space>gps :Dispatch! git push<cr>
+nnoremap <space>gpl :Dispatch! git pull<cr>
+map <space>gb :GBrowse!<cr>
+map <space>gB :GBrowse<cr>
+nnoremap <space>gh :.Gclog<cr>
+nnoremap <space>gH :0Gclog<cr>
+nnoremap <space>g<space> :G<space>
+nnoremap <space>v<space> :vert G<space>
+nnoremap <space>gf :Dispatch! git fetch --all<cr>
+
+function s:gitgraph()
+    let obj = fugitive#Object()
+    vert Git log --graph --oneline --all --decorate 
+
+    nmap <buffer> ) :call search('^[<bar> *]*\zs[a-z0-9]\+','W')<cr>
+    nmap <buffer> ( :call search('^[<bar> *]*\zs[a-z0-9]\+','Wb')<cr>
+
+    if obj =~ '^[a-z0-9]\+\(:.*\)\?$'
+        call search(obj[:6], 'w')
+        exe '3match gitDiffAdded /^[| *]*\zs\(' . obj[:6] . '\)/'
+    else
+        call search('^[| *]*\zs[a-z0-9]\+','W')
+        let modified = systemlist('git log --all --follow --pretty=format:"%h" -- '.shellescape(obj))->join('\|')
+        exe '3match gitDiffAdded /^[| *]*\zs\(' . modified . '\)/'
+    endif
+    2match gitcommitBranch /^[| *]*[a-z0-9]* \zs([^)]*)/
+
+endfunction
+nnoremap <space>gg <cmd>call <sid>gitgraph()<cr>
 
 function! s:autocommit()
     let msg = system("autocommit")
@@ -129,6 +166,8 @@ endfunction
 "Plug 'tpope/vim-tbone'
 
 nnoremap <space>t :Tmux<space>
+nnoremap <F5> <cmd>call utils#leftview()<cr>
+tnoremap <F5> <C-W>:call utils#leftview()<cr>
 
 "Plug 'michaeljsmith/vim-indent-object'
 "Plug 'schickling/vim-bufonly'
@@ -136,7 +175,7 @@ nmap <C-F2> <cmd>BufOnly<cr><C-L><cmd>AirlineRefresh<cr>
 
 "Plug 'ludovicchabant/vim-gutentags'
 let g:gutentags_cache_dir = '~/.cache/tags'
-let g:gutentags_project_root = ['.git', '.hg', '.svn', '.bzr', '_darcs', '.root', 'build', '.cenv', '.env']
+let g:gutentags_project_root = ['.git', '.hg', '.svn', '.bzr', '_darcs', '.root', '.cenv', '.env']
 let g:gutentags_ctags_tagfile = '.tags'
 let g:gutentags_ctags_extra_args = [
             \'--fields=+l', '--fields=+d', '--options=' . $HOME . '/.ctags',
@@ -201,7 +240,13 @@ map <leader>ca <cmd>CondaChangeEnv<cr>
 map <leader>ce :CondaActivate<space>
 map <leader>ci <cmd>Conda info<cr>
 command! -nargs=? Conda exe "Dispatch " . $CONDA_EXE . ' ' . <q-args>
+command! -nargs=? Pip exe "Dispatch " . $CONDA_EXE . ' run -n ' . $CONDA_DEFAULT_ENV . ' pip ' . <q-args>
 let $ENVNAME = $CONDA_DEFAULT_ENV
+augroup conda
+    autocmd!
+    au VimEnter * Alias conda Conda
+    au VimEnter * Alias pip Pip
+augroup END
 " let g:conda_startup_msg_suppress = 1
 " let g:conda_startup_wrn_suppress = 1
 
@@ -215,7 +260,7 @@ let g:jedi#goto_assignments_command = ""
 let g:jedi#popup_on_dot = 0
 
 "Plug 'gioele/vim-autoswap'
-let g:autoswap_detect_tmux = 1
+" let g:autoswap_detect_tmux = 1
 
 "Plug 'airblade/vim-rooter'
 let g:rooter_patterns = ['Makefile', '.git', '.hg', '.svn', '.bzr', '_darcs', '.root']
@@ -304,8 +349,8 @@ let g:ale_linters = {
 let g:ale_fixers = {
             \   'python': ['black', 'autoimport', 'remove_trailing_lines', 'trim_whitespace', 'autoflake'],
             \   'tex': ['latexindent'],
-            \   'html': ['prettier'],
-            \   'bib': ['bibclean'],
+            \   'html': ['remove_trailing_lines', 'trim_whitespace', 'prettier'],
+            \   'bib': [],
             \   'yml': ['prettier'],
             \}
 let g:ale_html_tidy_executable = '/usr/local/bin/tidy'
@@ -320,7 +365,6 @@ nmap <C-H> :ALEFix<cr>
 nmap <silent> <C-K> <plug>(ale_previous_wrap)
 nmap <silent> <C-J> <plug>(ale_next_wrap)
 let g:ale_fixers['*'] = ['remove_trailing_lines', 'trim_whitespace']
-let g:ale_javascript_prettier_options = '--use-tabs'
 
 "Plug 'jeetsukumaran/vim-pythonsense'
 " Plug 'jupyter-vim/jupyter-vim'
@@ -336,11 +380,23 @@ let g:UltiSnipsJumpForwardTrigger = '<C-A>'
 let g:UltiSnipsJumpBackwardTrigger = '<C-O>'
 
 "Plug 'github/copilot.vim'
-imap <C-\><C-L> <Plug>(copilot-suggest)<Plug>(copilot-accept-line)
-imap <C-\><C-W> <Plug>(copilot-suggest)<Plug>(copilot-accept-word)
-imap <C-\><C-N> <Plug>(copilot-suggest)<Plug>(copilot-next)
+" imap <C-\><C-L> <Plug>(copilot-suggest)<Plug>(copilot-accept-line)
+" imap <C-\><C-W> <Plug>(copilot-suggest)<Plug>(copilot-accept-word)
+" imap <C-\><C-N> <Plug>(copilot-suggest)<Plug>(copilot-next)
 " imap <silent><script><expr> <C-\><C-\> copilot#Accept("")
+imap <C-\> <Plug>(copilot-suggest)<Plug>(copilot-accept-word)
 
 "Plug 'Matt-A-Bennett/vim-surround-funk'
+
+" Plug 'altercation/vim-colors-solarized'
+" Plug 'alvan/vim-closetag'
+
+" Plug 'vim-scripts/cmdalias.vim'
+" Plug 'dohsimpson/vim-macroeditor'
+" Plug 'tommcdo/vim-express'
+
+vmap <silent> <C-T> <Plug>TranslateRV
+let g:translator_target_lang = 'en'
+let g:translator_source_lang = 'zh-CN'
 
 

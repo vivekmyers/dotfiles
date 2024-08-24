@@ -1,12 +1,52 @@
 #!/bin/bash
 
-name="$(basename $(pwd))_arXiv"
-rm -rf "$name"
-arxiv_latex_cleaner .
-mv "../$name" .
-cp build/*.bbl "$name"
-rm -f "$name/arxiv.zip" "$name/makefile" "$name/".*
-zip -r arxiv.zip "$name"
-rm -rf "$name"
+set -e
 
-show arxiv.zip
+if ! git diff --quiet; then
+    echo "working tree is not clean"
+    exit 1
+fi
+
+if [[ ! -e build ]]; then
+    echo "No build found"
+fi
+
+if ! ls build | grep -qF .bbl; then
+    echo "No .bbl file found"
+    exit 1
+fi
+
+if ! ls build | grep -qF .fls; then
+    echo "No .fls file found"
+    exit 1
+fi
+
+src="$(basename $(pwd))_src"
+dst="$(basename $(pwd))_src_arXiv"
+rm -rf "build/$src"
+rm -f build/arxiv.zip
+mkdir -p "build/$src"
+
+git ls-files | xargs -I {} rsync -R {} "build/$src"
+
+cp build/*.bbl "build/$src"
+
+find "build/$src" \
+    -name "*.tex" -or -name "*.bbl" -or -name "*.bib" \
+    -or -name "*.bst" -or -name "*.cls" -or -name "*.sty" \
+    -or -name "*.pdf" -or -name "*.png" -or -name "*.jpg" \
+    -or -name "*.eps" -or -name "*.sty" -or -name "*.csv" \
+    -or -delete
+
+( cd "build/$src" && find . -type f -name '*.tex' ) | while read file; do
+    grep -qF "$(basename $file)" build/*.fls || ( rm "build/$src/$file" && echo "removing $file" )
+done
+
+arxiv_latex_cleaner "build/$src" 
+
+( cd "build/$src" &&
+  find . -name "*.csv" -not -path "*/build/*" | 
+  xargs -I {} rsync -R {} "../../build/$dst" )
+
+( cd build && zip -r arxiv.zip "$dst" )
+show build/arxiv.zip

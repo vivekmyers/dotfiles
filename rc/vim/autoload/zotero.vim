@@ -3,11 +3,14 @@ function zotero#select()
     if l:title == ''
         return
     endif
-    let l:pat = substitute(l:title[:30], '[^a-zA-Z0-9]', '*', 'g')
-    let l:pdf = systemlist('find ~/Zotero/storage -iname "*' . l:pat . '*.pdf"')
+    let l:title = l:title[:30]
+    let l:pat = substitute(l:title, '[^a-zA-Z0-9]', '*', 'g')
+    let l:pdf = systemlist('find ~/Zotero/storage -iname '.shellescape('*' . l:pat . '*.pdf'))
     if l:pdf != []
-        let l:id = matchstr(l:pdf[0], '[^/]\+\ze/[^/]\+\.pdf')
-        silent! call system('open zotero://select/library/items/' . l:id)
+        let l:ids = map(l:pdf, {key, val -> matchstr(val, '[^/]\+\ze/[^/]\+\.pdf')})
+        for id in l:ids
+            silent! call system('open zotero://select/library/items/' . id)
+        endfor
     endif
 endfunction
 
@@ -16,8 +19,9 @@ function zotero#openref()
     if l:title == ''
         return
     endif
-    let l:pat = substitute(l:title[:30], '[^a-zA-Z0-9]', '*', 'g')
-    let l:pdf = systemlist('find ~/Zotero/storage -iname "*' . l:pat . '*.pdf"')
+    let l:title = l:title[:30]
+    let l:pat = substitute(l:title, '[^a-zA-Z0-9]', '*', 'g')
+    let l:pdf = systemlist('find ~/Zotero/storage -iname '.shellescape('*' . l:pat . '*.pdf'))
     if l:pdf != []
         silent! call system('open -a Skim "' . l:pdf[0] . '"')
     endif
@@ -25,63 +29,26 @@ endfunction
 
 function zotero#copyref()
     let l:tag = expand('<cword>')
-    let l:taglist = taglist('^' . l:tag . '$')
-    if l:taglist == []
-        echo "no tag found for " . l:tag
-    else
-        if l:taglist[0].filename =~ '\.bib$'
-            let l:pos = getcharpos('.')
-            let l:view = winsaveview()
-            let l:pos[0] = bufnr('%')
-            exe 'new ' . l:taglist[0].filename
-            exe 'edit ' . l:taglist[0].filename
-            exe l:taglist[0].cmd
-
-            let a0 = getpos("'a")
-            let b0 = getpos("'b")
-            let s0 = getreginfo('@')
-
-            call search('title', 'cW')
-            call search('[{"]', 'cW')
-            let del = strcharpart(getline('.')[col('.') - 1:], 0, 1)
-
-            call search('.', 'W')
-
-            call setpos("'a", getpos('.'))
-            
-            if del == '{'
-                call searchpair('{', '', '}', 'W')
-            else
-                call search('"', 'W')
-            endif
-
-            call setpos("'b", getpos('.'))
-            normal! `ay`b
-            let l:title = getreg('"')
-
-            call setpos("'a", a0)
-            call setpos("'b", b0)
-            call setreg('@', s0)
-
-            close
-            call setpos('.', l:pos)
-            call winrestview(l:view)
-            let l:title = substitute(l:title, '[{}\n]', '', 'g')
-            let l:title = substitute(l:title, '  *', ' ', 'g')
-            let l:title = substitute(l:title, '^ *\| $\|"', '', 'g')
-            redraw
-            if l:title == ''
-                echo "no title found"
-            else
-                echo l:title
-                let @* = l:title
-                return @*
-            endif
-        else
-            echo "tag from " . l:taglist[0].filename
-        endif
-    endif
-    return ''
+    let l:title = bib#title(l:tag)
+    echo l:title
+    let @* = l:title
+    return l:title
 endfunction
 
+function zotero#cite()
+    let focused = system('yabai -m query --windows --window | jq -r ".id"')
+    let api_call = 'http://127.0.0.1:23119/better-bibtex/cayw?format=translate&translator=bibtex'
+    silent! let entry = system('curl -s '.shellescape(api_call))
+    let ref = entry->split()->map({_, val -> matchstr(val, '[[:space:]]*@[[:alnum:]]\+{\zs[^,]*\ze,')})->filter({_, val -> val != ''})->join(',')
+    let @* = entry
+    call system('yabai -m window --focus ' . focused)
+    return ref
+endfunction
 
+function zotero#import()
+    let focused = system('yabai -m query --windows --window | jq -r ".id"')
+    let api_call = 'http://127.0.0.1:23119/better-bibtex/cayw?format=translate&translator=bibtex'
+    let entry = system('curl -s '.shellescape(api_call))
+    call system('yabai -m window --focus ' . focused)
+    call bib#updateref(entry)
+endfunction

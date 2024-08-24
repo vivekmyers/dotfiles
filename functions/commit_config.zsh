@@ -9,7 +9,8 @@ function commit_config {
             zsh -c "load utils; cd "$(dirname $line)" && git add . && acom"
         done 
     ) 
-    zsh -c 'cd $CONFIGDIR && git pull && git push && make'
+    zsh -c 'cd $CONFIGDIR && git pull && git push'
+    zsh -c 'cd $CONFIGDIR && make'
 }
 
 commit_config "$@"

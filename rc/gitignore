@@ -1,25 +1,2 @@
-# assign7 .gitignore
-
-# don't track these build products, anchored to top-level dir
-/*.d
-/*.o
-/*.a
-
-# ignore files pulled into repo for testing purposes
-padvtest.c
-simple-test6.cc
-simple-test7.cc
-simple-test8.cc
-simple-test9.cc
-simple-test10.cc
-simple-test11.cc
-simple-test12.cc
-
-# explicitly name project executables here
-farm
-trace
-padvtest
-*-test
-*-test?
-
-database.txt
+__pycache__
+.*

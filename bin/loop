@@ -1,0 +1,17 @@
+#!/bin/bash
+
+function loop {
+    (
+        tput reset && tmp="$(mktemp)"  && trap 'rm -f "$tmp"' EXIT && while true
+        do
+            COLS=$(($(tput cols)-1))
+            echo -n "" > "$tmp" && eval "$@" | for i in $(seq $(($(tput lines))))
+            do
+                IFS= read -r line
+                printf "%.${COLS}s$(tput sgr0)\n" "$(printf "%-${COLS}s" "$line")" >> "$tmp"
+            done && truncate -s -1 "$tmp" && tput cup 0 0 && cat "$tmp" && sleep 1 || break
+        done
+    )
+}
+
+loop "$@"

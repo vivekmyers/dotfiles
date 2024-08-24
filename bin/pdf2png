@@ -1,0 +1,15 @@
+#!/bin/bash
+
+src="$1"
+
+src="${src%.pdf}.pdf"
+
+if [[ -z "$2" ]]; then
+    dest="${src%.pdf}.png"
+else
+    dest="$2"
+fi
+
+dest="${dest%.png}.png"
+
+convert -density "${3-200}" "$src" -quality 100 -flatten "$dest"

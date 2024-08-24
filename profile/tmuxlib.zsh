@@ -39,15 +39,24 @@ function tkrun {
 }
 
 function _tinf {
-    pid=$(tmux list-panes -t $1 -F "#{pane_pid}")
-    child=$(pgrep -P "$pid" | head -n1)
-    echo -n "$1" ':'
-    if [[ -n "$child" ]]; then
-        echo -n "$child" ':'
-        ps -o command -p "$child" | awk 'NR>1'
-    else
-        echo "$pid" ':'
-    fi
+    arg=$(printf "%-14s " "$1" | cut -c 1-14)
+    pids=( $(tmux list-panes -t $1 -F "#{pane_pid}" ) ) 
+    for i in $(seq 1 $((${#pids[@]}))); do
+        pid=${pids[$i]}
+        echo -n "$arg"
+        if [[ $i -lt $((${#pids[@]} - 1)) ]]; then
+            arg='  ├────────── '
+        else
+            arg='  └────────── '
+        fi
+        child=$(pgrep -P "$pid" | head -n1)
+        if [[ -n "$child" ]]; then
+            echo -n "$child" ':'
+            ps -o command -p "$child" | awk 'NR>1'
+        else
+            echo "$pid" ':'
+        fi
+    done 
 }
 
 function tinf {
@@ -55,7 +64,8 @@ function tinf {
     if [ -z $1 ]; then
        args=($(tmux list-sessions -F "#{session_name}")) 
     fi
-    ( echo $'NAME:PID:CMD'
+    ( printf "%-14s" "NAME";
+      echo $'PID:CMD'
     rep _tinf "$args[@]" ) | column -ts:
 }
 

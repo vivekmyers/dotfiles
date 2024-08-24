@@ -1,8 +1,7 @@
 " writing
 nnoremap <C-S> <cmd>w<cr>
-nnoremap <C-S><C-A> <cmd>wall<cr>
 inoremap <C-S> <C-O><cmd>w<cr>
-nnoremap <C-S><C-S> <cmd>w<cr><cmd>call utils#savesession()<cr>
+nnoremap <C-S><C-S> <cmd>wall<cr><cmd>call utils#savesession()<cr>
 imap <C-S><C-S> <C-O><C-S><C-S>
 nnoremap <C-S><C-F> <cmd>call utils#forcewrite()<cr>
 inoremap <C-S><C-O> <cmd>w<cr>
@@ -18,11 +17,13 @@ nnoremap <C-S><C-Q> <cmd>qa<cr>
 nmap <C-S><C-R> <cmd>call utils#reload()<cr>
 map <F2> <cmd>bd<cr><C-L>
 imap <F2> <C-O><cmd>bd<cr><C-L>
+tnoremap <F2> <C-W>:bd!<cr>
 nnoremap <leader>q <cmd>try<bar>write<bar>catch<bar>endtry<bar>b#<bar>bd#<cr>
 nnoremap <leader>Q <cmd>b#<bar>bd#<cr>
 noremap <C-6> <C-^>
 map <leader>so :w<cr>:source %<cr>
 map + <C-W>+<C-W>>
+nmap <C-S><C-A> <cmd>call tex#main()<cr>
 
 " shortcuts
 noremap <C-E> <cmd>cclose\|lclose\|noh\|echo ""<cr>
@@ -30,10 +31,10 @@ noremap <C-P> @:<cr>
 nnoremap gp `[v`]
 noremap ; :
 noremap "" "*
-vnoremap * y/\V<C-R>=substitute(escape(@@,"/\\"),"\n","\\\\n","ge")<CR><CR>
-vnoremap # y?\V<C-R>=substitute(escape(@@,"?\\"),"\n","\\\\n","ge")<CR><CR>
-nnoremap  <silent> <C-Q> :bnext<cr>
-tnoremap  <silent> <C-Q> <C-W>:bnext<cr>
+vnoremap * y/<C-R>=substitute(escape(@@,'~^$.*?/\[]' . '"' . "'"),"\n","\\\\n","ge")<CR><CR>
+vnoremap # y?<C-R>=substitute(escape(@@,'~^$.*?/\[]' . '"' . "'"),"\n","\\\\n","ge")<CR><CR>
+nnoremap <silent> <C-Q> :bnext<cr>
+tnoremap <silent> <C-Q> <C-W>:bnext<cr>
 
 " edit configs
 noremap <C-N><C-N> <cmd>e $CONFIGDIR/rc/vimrc<cr>
@@ -44,7 +45,7 @@ noremap <C-N><C-A> <cmd>call utils#autoconf()<cr>
 noremap <C-N><C-S> <cmd>call utils#snipconf()<cr>
 noremap <C-N><C-M> <cmd>e makefile<cr>
 noremap <C-N><C-P> <cmd>e $CONFIGDIR/rc/vim/autoload/load.vim<cr>
-noremap <C-N><C-R> <cmd>Dispatch commit_config<cr>
+noremap <C-N><C-R> <cmd>Dispatch! commit_config<cr>
 nnoremap <C-N><C-L> <cmd>call utils#localconf()<cr>
 nnoremap goo <cmd>call utils#gotosymlink()<cr>
 nnoremap <expr> goc "<cmd>call gtfo#open#file('".expand("<cfile>")."')<cr>"
@@ -56,7 +57,8 @@ nnoremap <space><leader> :AbortDispatch<cr>
 
 nnoremap <leader>cd <cmd>cd %:p:h\|pwd<cr>
 nnoremap <leader>cs <cmd>Copilot status<cr>
-nmap <F1> <cmd>copen<cr>
+nmap <F1> <cmd>Copen<cr><cmd>100cnext<cr><cmd>copen<cr><cmd>call search('^[^/].*<bar>.*<bar>','bc')<cr><cr>
+nmap <C-F1> <cmd>cprev<cr>
 nnoremap <leader>kc <cmd>!pkill -f ctags<cr>
 
 " file navigation
@@ -66,7 +68,15 @@ nnoremap ,p <cmd>Explore ~/papers<cr>
 nnoremap ,o :Note<space>
 command! -nargs=* RemoteExplore call utils#remote(<f-args>)
 command! -nargs=* Note call utils#note(<f-args>)
-cabbrev note Note
+command! -nargs=* Fig call utils#fig(<f-args>)
+command! -nargs=* Zsh exe "Start! zsh -lic ".shellescape(<q-args>)
+command! -nargs=* Get exe 'Dispatch! rsync -avz '.@*->split()->join(' ').' ./'
+fun SetupFiles()
+    Alias note Note
+    Alias fig Fig
+    Alias zsh Zsh
+    Alias get Get
+endfun
 
 " command! -nargs=* SearchFiles call utils#searchfiles(<f-args>)
 " command! -nargs=* FindFiles call utils#findfiles(<f-args>)
@@ -81,18 +91,43 @@ nmap ,n <cmd>NERDTreeFind<cr>
 nmap ,m <cmd>NERDTreeToggle<cr>
 let g:netrw_list_hide = '\(^\|\s\s\)\zs\.\S\+'
 let g:netrw_fastbrowse = 0
+let g:netrw_sort_by = 'time'
+let g:netrw_sort_direction = 'reverse'
+let g:netrw_keepdir = 0
+
+let g:netrw_rsync_cmd = "load sshlib; ssh_wrapper rsync"
+let g:netrw_scp_cmd = "load sshlib; ssh_wrapper scp"
+let g:netrw_sftp_cmd = "load sshlib; ssh_wrapper sftp"
+
+" let g:netrw_rsync_cmd = "zsh -c 'load sshlib; ssh_wrapper rsync $@' -- "
+" let g:netrw_scp_cmd = "zsh -c 'load sshlib; ssh_wrapper scp $@' -- "
+" let g:netrw_sftp_cmd = "zsh -c 'load sshlib; ssh_wrapper sftp $@' -- "
+
+
+
 autocmd FileType netrw setl bufhidden=wipe
 set maxmempattern=5000
 let g:startdir = getcwd()
+
+if g:startdir != $HOME
+    call utils#newdir()
+endif
 
 set autoread
 set autowrite
 set hidden
 set exrc
 
-nmap <leader>z <cmd>call zotero#openref()<cr>
-nmap <leader>Z <cmd>call zotero#copyref()<cr>
-nmap <leader>e <cmd>call zotero#select()<cr>
+nmap <space>zz <cmd>call zotero#openref()<cr>
+nmap <space>ze <cmd>call zotero#select()<cr>
+nmap <space>zi <cmd>call zotero#import()<cr>
+inoremap <C-z> <C-R>=zotero#cite()<cr><C-O><cmd>call bib#tryadd(@*)<cr>
+nnoremap <space>za <cmd>call bib#addref()<cr>
+nnoremap <space>zo <cmd>call bib#open()<cr>
+nnoremap <space>zc <cmd>call bib#copy()<cr>
+nnoremap <space>zC <cmd>call bib#append()<cr>
+nnoremap <space>zd <cmd>call bib#dedup(1)<cr>
+
 
 syntax enable
 set tabstop=4
@@ -120,18 +155,6 @@ inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
 set hlsearch
 
 nmap <leader>r <cmd>call utils#reload()<cr>
-
-augroup vimrc
-    autocmd!
-    autocmd BufWinEnter quickfix nnoremap <buffer> + <C-W>+<C-W>+
-    autocmd DirChanged * call utils#newdir()
-    autocmd BufRead,BufNewFile $HOME/**/papers/** call tex#overleaf()
-    autocmd BufReadPre *.ipynb call python#pythonsetup()
-
-
-    " autocmd BufEnter,BufWinEnter,WinEnter imap <silent><script><expr> <tab> copilot#Accept("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<cr>")
-augroup END
-
 
 packadd cfilter
 noh
@@ -162,12 +185,38 @@ highlight Terminal guibg='#002b36'
 highlight Terminal guifg='#93a1a1'
 autocmd TerminalOpen * if bufwinnr('') > 0 | setlocal nobuflisted | endif
 nnoremap <leader>t <cmd>vert term ++close<cr>
-tnoremap <esc><esc> <C-W>:bfirst<CR>
+tnoremap <esc><esc> <C-\><C-n>
 tnoremap <F1> <C-W>N
 
 
 set diffopt+=vertical
+vmap <silent> <space>dp :diffput<cr>
+vmap <silent> <space>dg :diffget<cr>
 nnoremap <C-L> <C-L><cmd>AirlineRefresh<cr><cmd>call utils#refreshcomplete()<cr>
 
 exe 'set shell='.expand('$SHELL')
 set guifont=Meslo\ LG\ S\ Regular\ for\ Powerline:h13
+
+
+function VimSetup()
+    Alias pydo py3do
+    Alias py py3
+    " MapSubpress tt /\<\w/\u\0/g
+    " vmap tt <esc>`<tt`>
+    nmap tt  <Plug>Titlecase
+    vmap tt  <Plug>Titlecase
+    nmap ttt <Plug>TitlecaseLine
+    call SetupFiles()
+endfunction
+
+
+
+augroup vimrc
+    autocmd!
+    autocmd BufWinEnter quickfix nnoremap <buffer> + <C-W>+<C-W>+
+    autocmd DirChanged * call utils#newdir()
+    autocmd BufRead,BufNewFile $HOME/**/papers/** call tex#overleaf()
+    autocmd BufReadPre *.ipynb call python#pythonsetup()
+    autocmd VimEnter * call VimSetup()
+augroup END
+

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+python ~/resources/libgen.py "$1" "$2"
+
+true

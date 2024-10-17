@@ -1,0 +1,18 @@
+#!/bin/bash
+# Split a video into frames
+#
+# Usage: splitframes <video> <output_dir>
+
+if [ "$#" -ne 1 ] && [ "$#" -ne 2 ]; then
+    echo "Usage: splitframes <video> <output_dir>"
+    exit 1
+fi
+
+dest="${2:-${1%.*}}"
+
+
+mkdir -p "$dest"
+mov2gif "$1" "$1.tmp.gif"
+convert -coalesce "$1.tmp.gif" "$dest/frame%04d.png"
+rm -f "$1.tmp.gif"
+

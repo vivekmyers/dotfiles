@@ -1,20 +1,32 @@
 #!/bin/bash
 
 
-CONTENT=$(cat "$1")
-STRIP=$(echo "$CONTENT" | vim -Es +'/^----*$/norm dgg' +G +'?^----*$?norm dG' +'%p' +q! /dev/stdin)
-DATE="$(date -jf '%Y-%m-%d.md' "$1" +'%Y-%m-%d')"
+DATE="$(date -jf '%Y-%m-%d.md' "$(basename $1)" +'%Y-%m-%d')"
+OUTFILE=${2:-"$1"}
 
 if [[ -z "$DATE" ]]; then
   exit 1
 fi
 
+if [[ -z "$2" ]]; then
+    vim -Es "$OUTFILE" +'/^------*$/norm dgg' +G +'?^------*$?norm dG' +wq
+fi
+
 PREV=$(date -v-1d -jf '%Y-%m-%d' "$DATE" +'%Y-%m-%d')
 NEXT=$(date -v+1d -jf '%Y-%m-%d' "$DATE"  +'%Y-%m-%d')
 LONGDATE=$(date -jf '%Y-%m-%d' "$DATE" +'%A, %B %d')
+DAYOFWEEK=$(date -jf '%Y-%m-%d' "$DATE" +'%A')
+MONTHDAYYEAR=$(date -jf '%Y-%m-%d' "$DATE" +'%B %-d, %Y')
+MONTHDAY=$(date -jf '%Y-%m-%d' "$DATE" +'%B %-d')
 MONTH=$(date -jf '%Y-%m-%d' "$DATE" +'%B %Y')
 
-read -r -d '' TEMPLATE << EOF
+read -r -d '' PREFIX << EOF
+---
+aliases:
+  - $DAYOFWEEK
+  - $MONTHDAY
+  - $MONTHDAYYEAR
+---
 
 > [!col]
 >> [!previous] [$PREV](journal/$PREV)
@@ -24,20 +36,23 @@ read -r -d '' TEMPLATE << EOF
 >> [!next] [$NEXT](journal/$NEXT)
 
 > [!schedule] $LONGDATE
-> <p/>
->
-> |||
-> |---|---|
 $(echo "$DATE" | shortcuts run 'Get Day Events' | uniq)
 
 > [!todo]
 >\`\`\`tasks
->(done is $DATE) OR (due date is $DATE) OR ((due before $DATE) AND (not done))
+>(done is $DATE) OR (due date is $DATE) OR ((due before $DATE) AND (not done)) OR ((scheduled before $NEXT) AND (not done))
 >\`\`\`
 
 --------
 
-$(echo "$STRIP" | sed '/[^ ]/,$!d' | tac | sed '/[^ ]/,$!d' | tac)
+
+
+EOF
+
+
+read -r -d '' SUFFIX << EOF
+
+
 
 --------
 
@@ -45,5 +60,17 @@ $(getphotos "$DATE" attachments | xargs)
 
 EOF
 
-printf "\n%s\n" "$TEMPLATE" > "$1"
-echo wrote "$1"
+if [[ "$OUTFILE" == "/dev/stdout" ]]; then
+  printf "%s\n\n" "$PREFIX"
+  cat "$1" | vim -Es +'g/^[[:space:]]*<%.*%>[[:space:]]*$/d' +%p +q! /dev/stdin
+  printf "\n\n%s\n" "$SUFFIX"
+  exit 0
+fi
+
+vim -Es "$OUTFILE" +'1g/./norm O' +'$g/./norm o' +wq
+vim -Es "$OUTFILE" +'0r '<(printf "%s" "$PREFIX") +wq
+vim -Es "$OUTFILE" +'$r '<(printf "%s" "$SUFFIX") +wq
+vim -Es "$OUTFILE" +'g/^[[:space:]]*<%.*%>[::space::]*$\v/d' +wq
+
+exit 0
+

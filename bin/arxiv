@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 if ! git diff --quiet; then
     echo "working tree is not clean"
     exit 1
@@ -48,5 +46,10 @@ arxiv_latex_cleaner "build/$src"
   find . -name "*.csv" -not -path "*/build/*" | 
   xargs -I {} rsync -R {} "../../build/$dst" )
 
+( find "build/$dst" -name '*.tex' ) | while read file; do
+    vim -Es "$file" '+%!cat -s' '+wq'
+done
+
 ( cd build && zip -r arxiv.zip "$dst" )
-show build/arxiv.zip
+cp build/arxiv.zip .
+show arxiv.zip

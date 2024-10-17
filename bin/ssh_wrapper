@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+ssh_wrapper () {
+	if command -v expect &> /dev/null
+	then
+		(
+			export GOOGLE_AUTH_SCRIPT
+			expect <(printf "%s" "$SSH_EXPECT_SCRIPT") "$@"
+		)
+	else
+		command "$@"
+	fi
+}

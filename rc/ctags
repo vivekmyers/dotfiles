@@ -30,5 +30,15 @@
 --regex-tex2=/^[^%]*\\newtheorem[ \t]*\*?\{[ \t]*([a-zA-Z]*)/\1/d,def/
 --regex-tex2=/^[^%]*\\DeclarePairedDelimiter.[ \t]*\{?[ \t]*\\([a-zA-Z@]*)/\1/d,def/
 --regex-tex2=/^[^%]*\\let[ \t]*\*?\\([a-zA-Z@]*)/\1/d,def/
+--regex-tex2=/^[^%]*\\newbox[ \t]*\*?\\([a-zA-Z@]*)/\1/d,def/
+--regex-tex2=/^[^%]*\\newcount[ \t]*\*?\\([a-zA-Z@]*)/\1/d,def/
+--regex-tex2=/^[^%]*\\newtoks[ \t]*\*?\\([a-zA-Z@]*)/\1/d,def/
 --regex-tex2=/^[^%]*\\definecolor[ \t]*\{([a-zA-Z0-9@]*)/\1/d,def/
 --regex-tex2=/^[^%]*\\colorlet[ \t]*\{([a-zA-Z0-9@]*)/\1/d,def/
+--regex-tex2=/legend to name=([^,\]]*)/\1/l,label/
+--langdef=css2
+--langmap=css2:+.css
+--regex-css2=/^[ \t]*\.([A-Za-z0-9_-]+)( |$)/\1/c,class,classes/
+--regex-css2=/^([\$@][A-Za-z0-9_-]+): /\1/v,variable,variables/
+--regex-css2=/^([A-Za-z0-9_-]+) = /\1/v,variable,variables/
+--regex-css2=/^[ \t]*(@mixin |= ?)([A-Za-z0-9_-]+)/\2/m,mixin,mixins/

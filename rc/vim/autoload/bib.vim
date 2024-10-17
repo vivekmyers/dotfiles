@@ -77,30 +77,34 @@ endfunction
 
 function bib#clean()
     
+    perldo /booktitle/ and s/proceedings.*of.*the(.*th)? //i
+    write
     exe '%!biber --tool --output_align --output-legacy-dates --output_indent=2 --output_fieldcase=lower -q -O - %'
-    normal G
+    silent! normal G
 
     while search('@', 'bW') != 0
 
         let l:start = getpos('.')
         let l:view = winsaveview()
         let l:start[0] = bufnr('%')
-        normal f{e
+        silent! normal f{e
         call bib#dedup(0)
 
         silent! normal yip
         if @" =~ '\<journaltitle\>' && @" !~ '\<journal\>'
-            exe "normal vip:s/journaltitle/journal/e\<cr>"
+            exe "silent! normal vip:s/journaltitle/journal/e\<cr>"
         endif
-        exe "normal vip:normal gww\<cr>"
+        silent! normal gaip=
+        silent! exe "normal vip:normal gww\<cr>"
 
         call winrestview(l:view)
         call setpos('.', l:start)
     endwhile
 
 
-    normal gggaG=
-
+    silent! normal gg=G
+    call system('rm -f '.expand('%').'.blg')
+    write
 
 endfunction
         
@@ -132,15 +136,14 @@ endfunction
 
 function s:duplicates(key, do, inter)
     let key = a:key
-    let l:title = bib#title(key)->tolower()->trim()
+    let l:title = bib#title(key)->tolower()->trim()->substitute('  *', ' ', 'g')
 
     let found = []
 
 
     let l:bib = vimtex#bib#files()
     if l:bib == []
-        echoerr "no bib file found"
-        return
+        let l:bib = globpath(expand('%:p:h'), '*.bib', 0, 1)
     endif
     for bib in l:bib
         let l:bib = bib
@@ -194,7 +197,7 @@ function s:duplicates(key, do, inter)
             let l:entry = substitute(l:entry, '  *', ' ', 'g')
             let l:entry = substitute(l:entry, '^ *', '', 'g')
             let l:entry = substitute(l:entry, ' *$', '', 'g')
-            let l:entry = l:entry->tolower()->trim()
+            let l:entry = l:entry->tolower()->trim()->substitute('  *', ' ', 'g')
 
             if l:entry == l:title && ( bibkey != key || found->index(key) != -1 )
                 if duplicate_count == 0 && a:do && a:inter

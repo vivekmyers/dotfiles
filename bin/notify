@@ -1,0 +1,5 @@
+#!/bin/bash
+
+timeout -k2s 5s /usr/bin/osascript -e "display notification \"$*\"" & bell
+disown
+

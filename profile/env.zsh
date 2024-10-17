@@ -25,6 +25,7 @@ export AUTOSWITCH_DEFAULT_CONDAENV=base
 autoload -Uz bashcompinit && bashcompinit
 export LANG=en_US.UTF-8
 export DEFAULT_USER=vivek
+export FILTER_BRANCH_SQUELCH_WARNING=1
 
 # if command -v nvidia-smi &> /dev/null; then
 #     export CUDA_VISIBLE_DEVICES="$(nvidia-smi | awk -F ' ' '$3=="NVIDIA"{i=$2;n=NR} NR==n+1&&n{print $9,i | "sort | head -n1 | cut -d\\  -f2" }')"

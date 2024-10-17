@@ -1,0 +1,5 @@
+#!/bin/bash
+
+
+ffmpeg -i "$1" -vf scale=960:-1 -r 32 -f image2pipe -vcodec ppm - | convert -delay 32 -loop 1 - "$2"
+

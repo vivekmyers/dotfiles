@@ -1,0 +1,7 @@
+#!/bin/bash
+
+glob="$1"
+output="$2"
+fps="${3:-30}"
+
+ffmpeg -framerate "$fps" -pattern_type -i "$glob" -r "$fps" -c:v libx264 -pix_fmt yuv420p "$out"

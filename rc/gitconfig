@@ -1,11 +1,6 @@
 [user]
 	email = vivek.myers@gmail.com
 	name = Vivek Myers
-[filter "lfs"]
-	required = true
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path = 
@@ -29,3 +24,7 @@
 	postBuffer = 157286400
 [log]
 	date = local
+[safe]
+	directory = /project/eecs/interact/www
+[include]
+	path = ~/.local/etc/gitconfig

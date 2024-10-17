@@ -1,0 +1,1 @@
+map mp :!perl %<CR>

@@ -13,33 +13,28 @@ fi
 
 conda install -y $@ || return 1
 
+while [[ "$1" =~ ^- ]]; do
+    shift
+done
+
 local args=( $( printf "%s\n" $@ | sed -E 's/[=<>].*//' ) )
 local pat="$(IFS='|'; echo "${args[*]}")"
 local added=( $(conda env export | grep -v 'pip:' | grep -E "^ *- *($pat)=" | sed 's/ *- *//' | sort | uniq) )
+
+read -r -d '' script <<'EOF'
+BEGIN                         { use Env; $level=0; $version=~s/([^.]*\.[^.]*(\.[^.]*)?).*/\1/ }
+/^dependencies:/       and do { $level++ };
+$level                 and do { s/^ *-/  -/; s/^ *- *$name.*$/  - $name=$version/ and do { $level = 0; } };
+/^ *- *pip:/ && $level and do {  print "  - $name=$version"; $level = 0 };
+eof && $level          and do { print; print "  - $name=$version"; exit }
+EOF
 
 for pkg in $added; do
     name="$(echo $pkg | sed -E 's/[=<>].*//')"
     version="$(echo $pkg | sed -E 's/=+/=/g' | cut -d= -f2 | grep -oE '^[0-9.]*')"
     echo "Trying to add $name=$version to environment.yml"
-    vim -Es \
-        +"global/^-/normal I  " \
-        +"/^dependencies:" \
-        +"+1" \
-        +"while getline('.') !~ '^ *- *$name' && getline('.') =~ '^ *-' && getline('.') !~ '^ *- *pip:'
-            | +1 
-        | endwhile" \
-        +"if getline('.') =~ '.*:' || getline('.') =~ '^ *$' 
-            | -1
-        | endif" \
-        +"if getline('.') =~ '^ *- *$name' 
-            | let vers = matchstr(getline('.'), '=.*')
-            | execute 'normal cc  - $name=$version'
-            | execute '!echo Package $name=$version added to environment.yml:' . line('.') . ', replacing $name' . vers
-        | else 
-            | execute 'normal o- $name=$version'
-            | execute '!echo Package $name=$version added to environment.yml:' . line('.')
-        | endif" \
-        +wq! environment.yml
+
+    name=$name version=$version perl -i -lpe "$script" environment.yml 
     echo
 done
 

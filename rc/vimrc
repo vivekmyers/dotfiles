@@ -1,3 +1,6 @@
+" Author: Vivek Myers <vivek.myers@gmail.com>
+" Date: 2024-09-02
+
 " writing
 nnoremap <C-S> <cmd>w<cr>
 inoremap <C-S> <C-O><cmd>w<cr>
@@ -8,21 +11,25 @@ inoremap <C-S><C-O> <cmd>w<cr>
 nnoremap <C-S><C-D> <cmd>wa<cr><cmd>call utils#savesession()<cr><cmd>qa<cr>
 nnoremap <C-S><C-L> <cmd>call utils#loadsession()<cr>
 nmap ,, <cmd>w<cr>
-nmap <F10> :wall<cr>
+nmap <F10> <cmd>wa<cr>
 
-" window management
+"Window Management
 nnoremap <C-D> <cmd>call utils#closenext()<cr>
-inoremap <C-D> <C-O><cmd>call utils#closenext()<cr>
+au VimEnter * ++once inoremap <C-D> <C-O><cmd>call utils#closenext()<cr>
 nnoremap <C-S><C-Q> <cmd>qa<cr>
 nmap <C-S><C-R> <cmd>call utils#reload()<cr>
-map <F2> <cmd>bd<cr><C-L>
-imap <F2> <C-O><cmd>bd<cr><C-L>
-tnoremap <F2> <C-W>:bd!<cr>
-nnoremap <leader>q <cmd>try<bar>write<bar>catch<bar>endtry<bar>b#<bar>bd#<cr>
-nnoremap <leader>Q <cmd>b#<bar>bd#<cr>
+map <F2> <cmd>call utils#closebuf()<cr>
+imap <F2> <C-O><cmd>call utils#closebuf()<cr>
+tnoremap <F2> <C-W>:call utils#closebuf()<CR>
+nnoremap <leader>q <cmd>bd<cr>
+nnoremap <leader>Q <cmd>bd!<cr>
 noremap <C-6> <C-^>
 map <leader>so :w<cr>:source %<cr>
-map + <C-W>+<C-W>>
+map <expr> + v:count.'<C-W>+'.v:count.'<C-W>>'
+map =+ :copen<cr>:resize 20<cr>
+nmap <space>dd <cmd>call utils#diff()<cr>
+nmap <space>da <space>a<space>dd
+nmap <space>D <cmd>windo diffoff<cr>
 nmap <C-S><C-A> <cmd>call tex#main()<cr>
 
 " shortcuts
@@ -30,11 +37,48 @@ noremap <C-E> <cmd>cclose\|lclose\|noh\|echo ""<cr>
 noremap <C-P> @:<cr>
 nnoremap gp `[v`]
 noremap ; :
-noremap "" "*
+nnoremap "" <cmd>call OSCYankRegister('*')<cr>
+set clipboard=unnamed,unnamedplus
+set shortmess+=I
 vnoremap * y/<C-R>=substitute(escape(@@,'~^$.*?/\[]' . '"' . "'"),"\n","\\\\n","ge")<CR><CR>
 vnoremap # y?<C-R>=substitute(escape(@@,'~^$.*?/\[]' . '"' . "'"),"\n","\\\\n","ge")<CR><CR>
-nnoremap <silent> <C-Q> :bnext<cr>
-tnoremap <silent> <C-Q> <C-W>:bnext<cr>
+" nnoremap <silent> <C-Q> :bnext<cr>
+" tnoremap <silent> <C-Q> <C-W>:bnext<cr>
+nnoremap <silent> <tab> :bnext<cr>
+nnoremap <silent> <S-tab> :bprev<cr>
+" tnoremap <silent> <C-tab> <C-W>:bprev<cr>
+tnoremap <silent> <C-Q> %debug<cr>
+tnoremap <C-up> up<cr>
+tnoremap <C-down> down<cr>
+nnoremap Y  yg_
+inoremap <C-Y> <C-R>=utils#date()<cr>
+map <space>& m'yiw*``:s///g<left><left>
+vmap <space>& m'*:let @"=@/<cr>``:s///g<left><left>
+
+fun! OpSearch(mot)
+    call feedkeys("'[V']:s///g\<left>\<left>", 't')
+endfun
+
+map g& m'yiw*``<plug>(operator-search)
+vmap g& m'*:let @"=@/<cr>``<plug>(operator-search)
+
+map & m'yiw*``:%s///g<left><left><cmd>silent! call repeat#set("&", v:count)<cr>
+vmap & m'*:let @"=@/<cr>``:%s///g<left><left>
+map G& m'yiw*``:Ggrep <c-r>=shellescape(@/)<cr><cr>:cdo s///g<left><left>
+vmap G& m'*:let @"=@/<cr>``:Ggrep <c-r>=shellescape(@/)<cr><cr>:cdo s///g<left><left>
+map g- m'yiw*``:Gsearch <c-r>=substitute(shellescape(@/),'#','\\\\#','g')<cr> *<cr>n:syn match MoreMsg /^[^:]*:[^:]*:/<cr>:autocmd BufWinLeave <buffer> ++once :Greplace<cr>
+vmap g- m'*:let @"=@/<cr>``:Gsearch <c-r>=substitute(shellescape(@/),'#','\\\\#','g')<cr> *<cr>n:syn match MoreMsg /^[^:]*:[^:]*:/<cr>:autocmd BufWinLeave <buffer> ++once :Greplace<cr>
+nmap <space>pp :%diffput
+vmap <space>pp :diffput
+nmap <space>oo :%diffget
+vmap <space>oo :diffget
+nmap !! :!
+nmap !. :.!
+nmap <expr> ymm ":redir @".v:register." <bar> 1mess <bar> redir END<cr>"
+nnoremap <space>/ /\c\<\><left><left>
+nmap <c-up> [q
+nmap <c-down> ]q
+
 
 " edit configs
 noremap <C-N><C-N> <cmd>e $CONFIGDIR/rc/vimrc<cr>
@@ -46,36 +90,48 @@ noremap <C-N><C-S> <cmd>call utils#snipconf()<cr>
 noremap <C-N><C-M> <cmd>e makefile<cr>
 noremap <C-N><C-P> <cmd>e $CONFIGDIR/rc/vim/autoload/load.vim<cr>
 noremap <C-N><C-R> <cmd>Dispatch! commit_config<cr>
+nnoremap <C-N><C-V> <cmd>VS<cr>
 nnoremap <C-N><C-L> <cmd>call utils#localconf()<cr>
-nnoremap goo <cmd>call utils#gotosymlink()<cr>
-nnoremap <expr> goc "<cmd>call gtfo#open#file('".expand("<cfile>")."')<cr>"
+nnoremap goo <cmd>silent! !open %<cr>
+nnoremap <expr> goc "<cmd>call gtfo#open#file('".glob("<cfile>*",0,1)[0]."')<cr>"
 
 " run commands
-noremap M <cmd>wall<cr>:Make<space><up>
+noremap M <cmd>Make!<cr>
 nnoremap <space><space> :Dispatch<space>
-nnoremap <space><leader> :AbortDispatch<cr>
+nnoremap <space><leader> :AbortDispatch<cr>:AsyncStop<cr>
 
 nnoremap <leader>cd <cmd>cd %:p:h\|pwd<cr>
 nnoremap <leader>cs <cmd>Copilot status<cr>
-nmap <F1> <cmd>Copen<cr><cmd>100cnext<cr><cmd>copen<cr><cmd>call search('^[^/].*<bar>.*<bar>','bc')<cr><cr>
+" nmap <F1> <cmd>Copen<cr><cmd>100cnext<cr><cmd>copen<cr><cmd>call search('^[^/].*<bar>.*<bar>','bc')<cr><cr>
+nmap <F1> <cmd>copen<cr><cmd>call search('^[^/].*<bar>.*<bar>','bc')<cr><cr>
 nmap <C-F1> <cmd>cprev<cr>
 nnoremap <leader>kc <cmd>!pkill -f ctags<cr>
 
 " file navigation
-nnoremap ,e <cmd>Explore<cr>
+" nnoremap ,e <cmd>try<bar>Explore */%:.<bar>catch<bar>Explore<bar>endtry<cr>
+nnoremap ,e :e <cfile>
+nnoremap ,E <cmd>Explore<cr>
+nnoremap ,v <cmd>try<bar>Vexplore */%:.<bar>catch<bar>Vexplore<bar>endtry<cr>
 nnoremap ,r :RemoteExplore <up>
 nnoremap ,p <cmd>Explore ~/papers<cr>
-nnoremap ,o :Note<space>
+nnoremap ,o <cmd>Explore ~/notes<cr>
 command! -nargs=* RemoteExplore call utils#remote(<f-args>)
 command! -nargs=* Note call utils#note(<f-args>)
 command! -nargs=* Fig call utils#fig(<f-args>)
 command! -nargs=* Zsh exe "Start! zsh -lic ".shellescape(<q-args>)
-command! -nargs=* Get exe 'Dispatch! rsync -avz '.@*->split()->join(' ').' ./'
-fun SetupFiles()
+command! -nargs=* -complete=file Get exe 'Dispatch! rsync -avz '.(<q-args>->split()->map('shellescape(expand(v:val))')->join(' ')).' ./'
+command! -nargs=* -bang -complete=custom,utils#templates Template call utils#template(<bang>0, <f-args>)
+command! -nargs=* -complete=custom,utils#mines Mine call utils#mine(<f-args>)
+command! -nargs=* Config call utils#conf(<f-args>)
+command! -nargs=1 Install call utils#install(<f-args>)
+fun! s:commands()
     Alias note Note
     Alias fig Fig
     Alias zsh Zsh
     Alias get Get
+    Alias template Template
+    Alias mine Mine
+    Alias conf Config
 endfun
 
 " command! -nargs=* SearchFiles call utils#searchfiles(<f-args>)
@@ -86,7 +142,7 @@ endfun
 source ~/.vim/autoload/load.vim
 source ~/.vim/autoload/plugins.vim
 
-nmap ,f <cmd>!open %:h<cr>
+nmap ,f <cmd>silent! !open %:h<cr>
 nmap ,n <cmd>NERDTreeFind<cr>
 nmap ,m <cmd>NERDTreeToggle<cr>
 let g:netrw_list_hide = '\(^\|\s\s\)\zs\.\S\+'
@@ -98,12 +154,6 @@ let g:netrw_keepdir = 0
 let g:netrw_rsync_cmd = "load sshlib; ssh_wrapper rsync"
 let g:netrw_scp_cmd = "load sshlib; ssh_wrapper scp"
 let g:netrw_sftp_cmd = "load sshlib; ssh_wrapper sftp"
-
-" let g:netrw_rsync_cmd = "zsh -c 'load sshlib; ssh_wrapper rsync $@' -- "
-" let g:netrw_scp_cmd = "zsh -c 'load sshlib; ssh_wrapper scp $@' -- "
-" let g:netrw_sftp_cmd = "zsh -c 'load sshlib; ssh_wrapper sftp $@' -- "
-
-
 
 autocmd FileType netrw setl bufhidden=wipe
 set maxmempattern=5000
@@ -121,7 +171,7 @@ set exrc
 nmap <space>zz <cmd>call zotero#openref()<cr>
 nmap <space>ze <cmd>call zotero#select()<cr>
 nmap <space>zi <cmd>call zotero#import()<cr>
-inoremap <C-z> <C-R>=zotero#cite()<cr><C-O><cmd>call bib#tryadd(@*)<cr>
+inoremap <C-z> <C-R>=zotero#cite()<cr><C-O><cmd>silent! call bib#tryadd(g:zotero_added)<cr>
 nnoremap <space>za <cmd>call bib#addref()<cr>
 nnoremap <space>zo <cmd>call bib#open()<cr>
 nnoremap <space>zc <cmd>call bib#copy()<cr>
@@ -149,12 +199,16 @@ endtry
 set autowrite
 set backspace=indent,eol,start
 set viminfo='20,<100
-setlocal spell
 set spelllang=en_us
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
 set hlsearch
 
-nmap <leader>r <cmd>call utils#reload()<cr>
+set undodir=$HOME/.vim/undo
+set undofile
+call system("mkdir -p ".&undodir)
+
+
+nmap <space>r <cmd>call utils#reload()<cr>
 
 packadd cfilter
 noh
@@ -183,8 +237,9 @@ let g:terminal_ansi_colors = [
   \'#ffffd7' ]
 highlight Terminal guibg='#002b36'
 highlight Terminal guifg='#93a1a1'
-autocmd TerminalOpen * if bufwinnr('') > 0 | setlocal nobuflisted | endif
+autocmd TerminalOpen * if bufwinnr('') > 0 | setlocal nobuflisted | setlocal bufhidden=wipe | endif
 nnoremap <leader>t <cmd>vert term ++close<cr>
+nnoremap <leader>T <cmd>vert term ++close ++curwin<cr>
 tnoremap <esc><esc> <C-\><C-n>
 tnoremap <F1> <C-W>N
 
@@ -192,23 +247,29 @@ tnoremap <F1> <C-W>N
 set diffopt+=vertical
 vmap <silent> <space>dp :diffput<cr>
 vmap <silent> <space>dg :diffget<cr>
-nnoremap <C-L> <C-L><cmd>AirlineRefresh<cr><cmd>call utils#refreshcomplete()<cr>
 
 exe 'set shell='.expand('$SHELL')
 set guifont=Meslo\ LG\ S\ Regular\ for\ Powerline:h13
 
 
-function VimSetup()
+fun! VimSetup()
     Alias pydo py3do
     Alias py py3
+    map <C-L> :call utils#refresh()<cr>
     " MapSubpress tt /\<\w/\u\0/g
     " vmap tt <esc>`<tt`>
+    MapSubpress tu /\<\w/\u\0/g
+    vmap tu <esc>`<tu`>
+    MapSubpress tl /\<\w/\l\0/g
+    " MapSubpress ts /\(^\|\.\)\s*/\l\0/g
+    MapExpress tn utils#untitlecase(v:val)
+    vmap tl <esc>`<tl`>
     nmap tt  <Plug>Titlecase
     vmap tt  <Plug>Titlecase
     nmap ttt <Plug>TitlecaseLine
-    call SetupFiles()
-endfunction
-
+    call operator#user#define('search', 'OpSearch')
+    call s:commands()
+endfun
 
 
 augroup vimrc
@@ -216,7 +277,28 @@ augroup vimrc
     autocmd BufWinEnter quickfix nnoremap <buffer> + <C-W>+<C-W>+
     autocmd DirChanged * call utils#newdir()
     autocmd BufRead,BufNewFile $HOME/**/papers/** call tex#overleaf()
+    autocmd BufRead,BufNewFile $HOME/templates/**/init.zsh call zsh#template()
+    autocmd BufRead,BufNewFile $HOME/templates/**/* call utils#templatesyntax()
     autocmd BufReadPre *.ipynb call python#pythonsetup()
-    autocmd VimEnter * call VimSetup()
+    autocmd VimEnter * silent! call VimSetup()
+    function GoStart(motion)
+        normal `[
+    endfunction
+
+    call operator#user#define('gostart', 'GoStart')
+    map gs <plug>(operator-gostart)
+
+    function GoEnd(motion)
+        normal `]
+    endfunction
+
+    call operator#user#define('goend', 'GoEnd')
+    map ge <plug>(operator-goend)
 augroup END
 
+nmap ZS :set foldmethod=syntax<cr>
+let $CONDA_EXE = $HOME . "/conda/bin/conda"
+
+
+let &t_TI = ""
+let &t_TE = ""

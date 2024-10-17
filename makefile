@@ -20,6 +20,7 @@ ifeq ($(shell uname),Linux)
 ifneq ($(shell hostname),phosphate)
 	CONDA_PKG += universal-ctags
 	EXTRA_CLI += ctags
+	CONDA_CLI += expect
 endif
 endif
 
@@ -31,9 +32,11 @@ EXTRA = $(HOME)/.local/etc
 RCEXCLUDE = cache/ ssh/ netrc
 ZSH = $(HOME)/.omz
 FDIR = $(ZSH)/functions
+COMPDIR = $(ZSH)/completions
 BIN = $(HOME)/.local/bin
 SSH = $(HOME)/.ssh/config $(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub $(HOME)/.ssh/sockets $(HOME)/.ssh/config_tpus
 FUNCTIONS = $(addprefix $(FDIR)/,$(shell basename -s .zsh functions/*.zsh))
+COMPLETIONS = $(addprefix $(COMPDIR)/_,$(shell basename -s .zsh completions/*.zsh))
 VAR = $(HOME)/.local/var
 
 PIPTARGETS = $(addprefix $(BIN)/,$(PIP_CLI))
@@ -42,7 +45,7 @@ CONDATARGETS = $(addprefix $(CONDABIN)/,$(CONDA_CLI))
 RCFILES = $(shell find rc -mindepth 1 -type f)
 RCDIRS = $(shell find rc -mindepth 1 -type d)
 RCDIRTARGETS = $(addprefix $(HOME)/.,$(RCDIRS:rc/%=%))
-RCEXTRA = $(SSH) $(HOME)/.netrc $(HOME)/.git-credentials $(HOME)/.config/github-copilot/hosts.json
+RCEXTRA = $(SSH) $(HOME)/.netrc $(HOME)/.git-credentials $(HOME)/.config/github-copilot/hosts.json $(HOME)/.gvimrc
 
 exclude = $(foreach target,$(1),$(if $(strip $(foreach ex,$(RCEXCLUDE),$(findstring $(ex),$(target)))),,$(target)))
 getrc = $(call exclude,$(addprefix $(HOME)/.,$(shell find rc/$(1) -type f | cut -d/ -f2-)))
@@ -59,31 +62,45 @@ zsh: $(BIN)/zsh $(HOME)/.zshrc ;
 $(FUNCTIONS): $(FDIR)/%: functions/%.zsh | $(FDIR)
 	$(LN) $(CURDIR)/$< $@
 
+$(COMPLETIONS): $(COMPDIR)/_%: completions/%.zsh | $(COMPDIR)
+	$(LN) $(CURDIR)/$< $@
+
 ssh: $(CONDABIN)/ssh $(SSH) secrets ;
 
-mujoco: $(HOME)/.mujoco/mjkey.txt $(HOME)/.mujoco/mjpro150 $(HOME)/.mujoco/mujoco200 ;
+mujoco: $(HOME)/.mujoco/mjkey.txt $(HOME)/.mujoco/mjpro150 $(HOME)/.mujoco/mujoco200 $(HOME)/.mujoco/mujoco210 ;
 
 $(HOME)/.mujoco/mjkey.txt: rc/mujoco/mjkey.txt
 
-.INTERMEDIATE: mjpro150.zip mujoco200.zip
+.INTERMEDIATE: mjpro150.zip mujoco200.zip mujoco210.tar.gz
 ifeq ($(shell uname),Linux)
 mjpro150.zip: | $(HOME)/.mujoco
 	wget -O $@ https://www.roboti.us/download/mjpro150_linux.zip
 
 mujoco200.zip: | $(HOME)/.mujoco
 	wget -O $@ https://www.roboti.us/download/mujoco200_linux.zip
+
+mujoco210.tar.gz: | $(HOME)/.mujoco
+	wget -O $@ https://github.com/google-deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz
 else
 mjpro150.zip: | $(HOME)/.mujoco
 	wget -O $@ https://www.roboti.us/download/mjpro150_osx.zip
 
 mujoco200.zip: | $(HOME)/.mujoco
 	wget -O $@ https://www.roboti.us/download/mujoco200_macos.zip
+
+mujoco210.tar.gz: | $(HOME)/.mujoco
+	wget -O $@ https://github.com/google-deepmind/mujoco/releases/download/2.1.0/mujoco210-macos-x86_64.tar.gz
 endif
 
 $(HOME)/.mujoco/%: %.zip | $(HOME)/.mujoco
 	rm -rf $@
 	yes | unzip -d $(HOME)/.mujoco $< "$**"
 	mv $@_* $@ 2>/dev/null || true
+
+$(HOME)/.mujoco/%: %.tar.gz | $(HOME)/.mujoco
+	rm -rf $@
+	tar -xzf $< -C $(HOME)/.mujoco
+	touch $@
 
 secrets: $(EXTRA)/secrets.json ;
 
@@ -108,7 +125,7 @@ $(CONDABIN)/zsh: $(CONDA) | $(BIN)
 	$(CONDA) install -y zsh --force-reinstall
 
 $(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_rsa.pub: $(HOME)/.ssh/%: private/ssh/% | $(HOME)/.ssh
-	cp -n $(CURDIR)/private/ssh/$(notdir $@) $@
+	-cp -n $(CURDIR)/private/ssh/$(notdir $@) $@
 	touch $@
 	chmod 600 $@
 
@@ -124,7 +141,10 @@ $(HOME)/.ssh/config_tpus: | $(HOME)/.ssh
 	chmod 600 $@
 
 $(HOME)/.netrc: private/netrc
-	$(LN) $(CURDIR)/private/netrc $@
+	$(LN) $(CURDIR)/$< $@
+
+$(HOME)/.gvimrc: private/gvimrc
+	$(LN) $(CURDIR)/$< $@
 
 $(HOME)/.git-credentials: private/git-credentials
 	$(LN) $(CURDIR)/private/git-credentials $@
@@ -138,7 +158,7 @@ vim: $(HOME)/.vimrc $(HOME)/.vim/plug.log $(HOME)/.vim/tags
 
 $(HOME)/.vim/plug.log: $(HOME)/.vim/autoload/load.vim $(BIN)/vim $(HOME)/.vim/autoload/plug.vim
 	rm -f $@
-	$(BIN)/vim +'PlugInstall --sync' +"w $@" +qall 1>/dev/null
+	yes | $(BIN)/vim -E +'PlugInstall --sync' +"w $@" +qall 1>/dev/null
 	cat $@
 
 $(HOME)/.vim/tags: $(BIN)/ctags $(HOME)/.vim/plug.log | $(HOME)/.vim
@@ -232,7 +252,7 @@ $(EXTRA)/environment.yml: $(CONDA) | $(EXTRA)
 $(EXTRA)/secrets.json: private/secrets.json | $(EXTRA)
 	cp $< $@
 
-DIRS = $(EXTRA) $(BIN) $(FDIR) $(VAR)
+DIRS = $(EXTRA) $(BIN) $(FDIR) $(VAR) $(COMPDIR)
 $(DIRS):
 	mkdir -p $@
 
@@ -243,7 +263,7 @@ getrc-%:
 	@echo $(call getrc,$*)
 
 profile: omz init $(patsubst profile/%.zsh,$(ZSH)/custom/%.zsh,$(wildcard profile/*.zsh)) \
-	$(patsubst private/profile/%.zsh,$(ZSH)/custom/%.zsh,$(wildcard private/profile/*.zsh)) $(FUNCTIONS) ;
+	$(patsubst private/profile/%.zsh,$(ZSH)/custom/%.zsh,$(wildcard private/profile/*.zsh)) $(FUNCTIONS) $(COMPLETIONS) ;
 
 init: $(ZSH)/custom/init.zsh ;
 

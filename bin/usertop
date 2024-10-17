@@ -1,0 +1,7 @@
+#!/bin/bash
+
+top -b -n 1  |\
+  awk ' BEGIN{OFS="\t"}
+     NR>7 { sum[$2] += $9; t += $9; mem[$2] += $10; tm += $10}
+     END {print "user","%CPU","%MEM" ; for (u in sum){
+         print u"\t"sum[u]"\t"mem[u];} print "total",t,tm}' | ptable

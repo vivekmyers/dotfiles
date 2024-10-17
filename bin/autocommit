@@ -40,6 +40,6 @@ tmp=$(git status --porcelain | awk '
             printf "Modified: %s", mod[0]
         }
     }
-' | sed 's/;[^;]*$//')
+' | perl -pe 's/;[^;]*$//')
 test -n "$tmp" && echo -n "$tmp" 
 

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+scale=${3:-1024}
+
+if [[ "$1" =~ '.mov$' ]]; then
+    ffmpeg -i input.mov -c copy -movflags +faststart  $1.tmp.mp4
+    ffmpeg -i "$1.tmp.mp4" -r 50 -vf scale=$scale:-1 -f image2pipe -vcodec ppm - | convert -delay 2 -loop 0 - "${2-${1%.*}.gif}"
+    rm $1.tmp.mp4
+else
+    ffmpeg -i "$1" -r 50 -vf scale=$scale:-1 -f image2pipe -vcodec ppm - | convert -delay 2 -loop 0 - "${2-${1%.*}.gif}"
+fi
+

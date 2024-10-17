@@ -1,9 +1,11 @@
 #!/bin/bash
+# Author: Vivek Myers
+# Date: 2024-08-28
 
-name="${1%.key}"
-out="${2-$name}"
-path="$(readlink -f "$1")"
-dir="$(dirname "$path")"
+name="$(basename ${1%.key})"
+outdir="$(readlink -f ${2-$name})"
+src="$(readlink -f "$1")"
+srcdir="$(dirname "$src")"
 
 read -d '' -r script << 'EOF'
 on sansExt(theFileName)
@@ -24,8 +26,10 @@ on run argv
     set keynote_file to open (keynote_path as POSIX file)
     if extension is equal to "pdf" then
       export keynote_file to (out_path as POSIX file) as PDF
+      close keynote_file saving no
   else if extension is equal to "jpeg" then
       export keynote_file to (basename as POSIX file) as slide images with properties { compression factor: 1.0, image format: JPEG }
+      close keynote_file saving no
   else
   do shell script "echo Output format " & extension & " not supported."
   end
@@ -33,15 +37,15 @@ end tell
 end run
 EOF
 
-rm -f "$name.pdf"
-osascript -e "$script" "$path" "$dir/$name.pdf" || exit 1
-rm -f "$out"/slide*.pdf
-mkdir -p "$out" 2>/dev/null
-pdfseparate "$name.pdf" "$out/slide%d.pdf"
-for i in "$out"/slide*.pdf; do
+rm -f "$outdir/$name.pdf"
+mkdir -p "$outdir" 2>/dev/null
+osascript -e "$script" "$src" "$outdir/$name.pdf" || exit 1
+rm -f "$outdir"/slide*.pdf
+pdfseparate "$outdir/$name.pdf" "$outdir/slide%d.pdf"
+for i in "$outdir"/slide*.pdf; do
     pdfcrop "$i" "$i" &
 done
 wait
-rm -f "$name.pdf"
+rm -f "$outdir/$name.pdf"
 
 

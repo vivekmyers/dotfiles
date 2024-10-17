@@ -68,13 +68,13 @@ function mark_dirty {
         if [[ -n "$trash" ]]; then
             trash "$file" && echo "Trashed: $file" || echo "Failed to trash: $file"
         elif [[ -n "$scratch" ]]; then
-            safe_copy "$file" ~/scratch <&3 && rm -f "$file" &&
+            safe_copy "$file" ~/scratch <&3 && rm -f -- "$file" &&
                 { echo "Moved: $file" || echo "Failed to move: $file"; }
         elif [[ -n "$clean" ]]; then
             read -q "ans?Delete $file? [y/N] " <&3
             echo
             if [[ "$ans" == "y" ]]; then
-                rm -rf "$file" &&
+                rm -rf -- "$file" &&
                 echo "Deleted: $file" ||
                 echo "Failed to delete: $file"
             else

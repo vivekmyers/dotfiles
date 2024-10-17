@@ -31,18 +31,23 @@ for x in "$@"; do
         if ! grep -q "ASCII text" <<< $(file $loc); then
             echo "Packing binary $x"
             cp $loc $prefix
+            chmod +x $prefix
             echo "Wrote $prefix"
         elif grep -Eq "^#!.*bin.*[^a-z]sh" $loc; then
             cat $loc > "$prefix.sh"
+            chmod +x "$prefix.sh"
             echo "Wrote $prefix.sh"
         elif grep -Eq "^#!.*bin.*[^a-z]bash" $loc; then
             cat $loc > "$prefix.sh"
+            chmod +x "$prefix.sh"
             echo "Wrote $prefix.sh"
         elif grep -Eq "^#!.*bin.*[^a-z]zsh" $loc; then
             cat $loc > "$prefix.zsh"
+            chmod +x "$prefix.zsh"
             echo "Wrote $prefix.zsh"
         elif grep -Eq "^#!" $loc; then
             cat $loc > "$x"
+            chmod +x "$x"
             echo "Wrote $x"
         else
             (
@@ -50,6 +55,7 @@ for x in "$@"; do
                 echo
                 cat $loc
             ) > "$prefix.sh"
+            chmod +x "$prefix.sh"
             echo "Wrote $prefix.sh"
         fi
     fi

@@ -19,6 +19,7 @@ BEGIN {
     else if ($0 ~ /^-o$/) { getline; split($0, opt, "="); options[opt[1]] = opt[2]; }
 }
 END {
+    if (host == "") { exit 1; }
     printf "Host %s\\n",name;
     printf "\\tHostName %s\\n",host;
     if (user != "") printf "\\tUser %s\\n",user;
@@ -32,17 +33,19 @@ update_tpu_list() {
     TPUS=$(gcloud compute tpus list --zone=$1 --format="value(name)")
 
     for TPU in ${(f)TPUS}; do
-        echo "Getting $TPU..."
+        ( echo "Getting $TPU..."
         gcloud_ssh_command="gcloud compute tpus tpu-vm ssh --zone $1 $TPU"
         echo exit | eval "${gcloud_ssh_command}" 2>&1 > /dev/null
         raw_ssh_command=$(eval "${gcloud_ssh_command} --dry-run")
-        echo $(extract_ssh $raw_ssh_command $TPU) >> $tmpfile
+        echo $(extract_ssh $raw_ssh_command $TPU) >> $tmpfile ) &
     done
 }
 
 update_tpu_list us-central1-a
 update_tpu_list us-central2-b
 update_tpu_list europe-west4-b
+
+wait
 
 chmod 600 $tmpfile
 mv $tmpfile ~/.ssh/config_tpus

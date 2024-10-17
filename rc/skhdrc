@@ -16,3 +16,4 @@ cmd + alt - tab : yabai -m window --focus
 ctrl - f6 [
     "MacVim": revim
 ]
+cmd - f6 : refront

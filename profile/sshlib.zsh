@@ -1,5 +1,5 @@
 
-read -r -d '' GOOGLE_AUTH_SCRIPT << EOF
+read -r -d '' GOOGLE_AUTH_SCRIPT << PYTHON
 import hmac, base64, struct, hashlib, time, json, os
 
 def get_hotp_token(secret, intervals_no):
@@ -48,10 +48,10 @@ if __name__ == "__main__":
 
     key = main(args.label)
     print(key)
-EOF
+PYTHON
 
 
-read -r -d '' SSH_EXPECT_SCRIPT << 'EOF'
+read -r -d '' SSH_EXPECT_SCRIPT << 'EXPECT'
 set timeout 15
 log_user 0
 set cmd [lrange $argv 0 end]
@@ -128,7 +128,7 @@ catch {
 catch wait result
 exit [lindex $result 3]
 
-EOF
+EXPECT
 
 function ssh_wrapper {
     if command -v expect &> /dev/null; then
@@ -142,7 +142,7 @@ function ssh_wrapper {
 function ssh { ssh_wrapper ssh "$@"; }
 function scp { ssh_wrapper scp "$@"; }
 function sftp { ssh_wrapper sftp "$@"; }
-function rsync { ssh_wrapper rsync "$@"; }
+function rsync { ssh_wrapper /usr/bin/rsync "$@"; }
 
 
 export GOOGLE_AUTH_SECRETS=$HOME/.local/etc/secrets.json

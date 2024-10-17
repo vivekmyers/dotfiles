@@ -1,5 +1,85 @@
 #!/bin/bash
 
-python ~/resources/libgen.py "$1" "$2"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: libgen <title> <author> <dest>"
+    exit 1
+fi
+trap 'rm -rf "$tmpdir"' EXIT
+tmpdir="$(mktemp -d)"
+dest="$(eval "echo $3")"
 
-true
+read -d '' python_code << EOF
+from libgen_api import LibgenSearch
+import sys
+import requests
+import os
+import gzip
+from joblib import Parallel, delayed
+import functools
+import tqdm
+from libgen_api.search_request import SearchRequest
+import requests
+from bs4 import BeautifulSoup
+
+title = "$1"
+author = "$2"
+dest = os.path.expanduser("$tmpdir/$(basename $dest)")
+s = LibgenSearch()
+print(f'Searching for {title.title()} by {author.title()}')
+results = s.search_title_filtered(title, {'Author': author}, exact_match=False)
+print(f'Found {results} results')
+MIRROR_SOURCES = ["GET", "Cloudflare", "IPFS.io", "Infura"]
+
+def resolve(item):
+    if item['Extension'] in ['pdf']:
+        for i in range(1, 6):
+            if f"Mirror_{i}" not in item:
+                continue
+            mirror = item[f"Mirror_{i}"]
+            page = requests.get(mirror,timeout=2)
+            soup = BeautifulSoup(page.text, "html.parser")
+            links = soup.find_all("a", string=MIRROR_SOURCES)
+            download_links = {link.string: link["href"] for link in links}
+            for x, y in download_links.items():
+                yield x, y
+
+def process(url, key, dest):
+    try:
+        response = requests.get(url, timeout=5)
+        ctp = response.headers['content-type']
+        # if 'pdf' not in ctp and 'gzip' not in ctp:
+        #     print(f'Error with {key}: content-type is {ctp}')
+        #     return
+        if len(response.content) < 10000:
+            print(f'Error with {key}: Too small')
+            return
+        if 'gzip' in ctp:
+            content = gzip.decompress(response.content)
+        else:
+            content = response.content
+        with open(dest, "wb") as f:
+            f.write(content)
+        print(f'Downloaded with {key}:', title)
+        return dest
+    except Exception as e:
+        print(f'Error with {key}: {type(e).__name__}')
+
+for r in tqdm.tqdm(results, desc='Downloading', position=1):
+    for key, url in tqdm.tqdm(resolve(r), desc='Mirrors', position=2):
+        res = process(url, key, dest)
+        if res:
+            print(f'Downloaded file: {res}')
+            break
+else:
+    print('No download link found')
+EOF
+
+python -c "$python_code" | tee /dev/stderr | awk -F: '/^Downloaded file:/{print $2; exit}' | xargs -I {} cp -v {} "$dest"
+
+if file "$dest" | grep -q 'PostScript'; then
+    echo "Converting PostScript to PDF"
+    mv "$dest" "${dest%.*}.ps"
+    ps2pdf "${dest%.*}.ps" "${dest%.*}.pdf"
+fi
+
+exit 0

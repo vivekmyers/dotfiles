@@ -208,8 +208,12 @@ function editdef {
             args=( $x "$(($line-1))" )
         done
     done
-    test -n "$args" && $EDITOR +'set ft=bash' -c "${args[2]}" -c "norm! zz" "$(readlink -f ${args[1]})" &&
-    source "${args[1]}"
+    if [[ -n "$PRINT" ]]; then
+        echo "${args[@]}"
+    else
+        test -n "$args" && $EDITOR +'set ft=bash' -c "${args[2]}" -c "norm! zz" "$(readlink -f ${args[1]})" &&
+        source "${args[1]}"
+    fi
 }
 
 function xinstall {
@@ -226,39 +230,6 @@ function xinstall {
     done
 }
 
-function znew {
-    if [[ ! -n "$1" ]]; then
-        echo "Usage: znew <name>"
-        return 1
-    fi
-    target="$CONFIGDIR/functions/$1.zsh"
-    vim "$target"
-
-    [[ -f "$target" ]] &&
-    ( commit_config >~/.local/var/znew.$1.log 2>&1 & ) &&
-    { ! command -v "$1" || unset -f "$1" ; } &&
-    autoload -Uz "$1" &&
-    rehash
-}
-
-function xnew {
-    if [[ ! -n "$1" ]]; then
-        echo "Usage: xnew <name>"
-        return 1
-    fi
-    local target="$CONFIGDIR/bin/$1"
-    local extra=""
-    if [[ ! -e "$target" ]]; then
-        local extra=+"norm! i#!/bin/bashcc"
-    fi
-    vim +"set ft=bash" $extra "$target"
-
-    [[ -f "$target" ]] &&
-    chmod +x "$target" &&
-    rehash &&
-    ( commit_config >~/.local/var/xnew.$1.log 2>&1 & )
-}
-
 function libnew {
     if [[ ! -n "$1" ]]; then
         echo "Usage: libnew <name>"
@@ -270,10 +241,6 @@ function libnew {
     [[ -f "$target" ]] &&
     source "$target" &&
     commit_config "$1"
-}
-
-function deswap {
-    find "${1-$PWD}" -type f -name "*.sw[klmnop]" -print -delete
 }
 
 function terms {

@@ -2,3 +2,8 @@ snippet args "argparse" b
 parser = argparse.ArgumentParser(description='$0
 args = parser.parse_args()
 endsnippet
+
+snippet makeargs "makeargs" b
+import sys
+sys.argv = ["python", "`!p snip.rv = fn`$0"]
+endsnippet

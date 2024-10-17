@@ -39,10 +39,15 @@ function zotero#cite()
     let focused = system('yabai -m query --windows --window | jq -r ".id"')
     let api_call = 'http://127.0.0.1:23119/better-bibtex/cayw?format=translate&translator=bibtex'
     silent! let entry = system('curl -s '.shellescape(api_call))
-    let ref = entry->split()->map({_, val -> matchstr(val, '[[:space:]]*@[[:alnum:]]\+{\zs[^,]*\ze,')})->filter({_, val -> val != ''})->join(',')
-    let @* = entry
-    call system('yabai -m window --focus ' . focused)
-    return ref
+    try
+        let ref = entry->split()->map({_, val -> matchstr(val, '[[:space:]]*@[[:alnum:]]\+{\zs[^,]*\ze,')})->filter({_, val -> val != ''})->join(',')
+        let g:zotero_added = entry
+        call system('yabai -m window --focus ' . focused)
+        return ref
+    catch
+        let g:zotero_added = ''
+        return ''
+    endtry
 endfunction
 
 function zotero#import()

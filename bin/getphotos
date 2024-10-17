@@ -5,9 +5,10 @@ tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 let i=0
 osxphotos export --not-hidden --regex "$1.*" "{created.date} {modified.date}" "$tmpdir" --convert-to-jpeg &> /dev/null
+( cd ~/Pictures/Photo\ Booth\ Library/Pictures; find . | grep $(date -jf '%Y-%m-%d' "$1" +'%-m-%-d-%-y') | tr '\n' '\0' | xargs -0 -I {} cp "{}" "$tmpdir" )
 
 rm -f "$2/$1"_*.*
-for line in $(find -E "$tmpdir" -type f -not -name ".*" -and -regex '.*\.jpe?g' | sort); do
+find -E "$tmpdir" -type f -not -name ".*" -and -regex '.*\.jpe?g' | sort | while read line; do
     let i++
     if [[ -e "$line" ]]; then
         target="$2/$1_$i.${line##*.}"

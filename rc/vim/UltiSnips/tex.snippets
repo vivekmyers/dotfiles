@@ -13,7 +13,7 @@ endglobal
 
 snippet makeat "makeatletter" bA
 \makeatletter
-$1
+${1:${VISUAL}}
 \makeatother
 $0
 endsnippet
@@ -24,7 +24,7 @@ endsnippet
 
 snippet bg "group" w
 \begingroup
-$1
+${1:${VISUAL}}
 \endgroup
 $0
 endsnippet
@@ -55,6 +55,10 @@ snippet hl "highlight" w
 }
 endsnippet
 
+snippet th "highlight" w
+\textcolor{orange}{${1:${VISUAL}}}
+endsnippet
+
 snippet vm "stamp" w
 `!v tex#stamp()`
 endsnippet
@@ -74,8 +78,12 @@ snippet em "emph" w
 \emph{${1:${VISUAL}}}$0
 endsnippet
 
-snippet thepr "numexpr" wA
-\the\numexpr $1\relax $0
+snippet dex "dimexpr" w
+\the\dimexpr ${1:${VISUAL}}\relax $0
+endsnippet
+
+snippet nex "numexpr" w
+\the\numexpr ${1:${VISUAL}}\relax $0
 endsnippet
 
 context "math()"
@@ -84,6 +92,12 @@ _{i}
 endsnippet
 context "math()"
 
+context "math()"
+snippet '(?<=[a-zA-Z])tt' "sub t" irA
+_{t}
+endsnippet
+
+context "math()"
 snippet kk "sub k" iA
 _{k}
 endsnippet
@@ -97,20 +111,13 @@ snippet tpt "textt" wA
 \texttt{${1:${VISUAL}}}$0
 endsnippet
 
-snippet parts "Question parts" b
-\begin{parts}
-> $0
-\end{parts}
-endsnippet
-
-
 snippet stand "Standalone template" b
 \documentclass[12pt,border=1cm]{standalone}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
-\usepackage[dvipsnames]{xcolor}
+\usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{tikz-cd}
@@ -126,7 +133,7 @@ endsnippet
 
 
 snippet doc "Basic template" b
-\documentclass{article}
+\documentclass{paper}
 
 \usepackage{amsmath}
 \usepackage{amsthm}
@@ -157,7 +164,7 @@ snippet doc "Basic template" b
 
 	$0
 
-	\bibliographystyle{unsrtnat}
+	\bibliographystyle{apalike}
 	\bibliography{references}
 
 \end{document}
@@ -180,6 +187,7 @@ $1
 endsnippet
 
 priority 100
+context "math()"
 snippet ... "ldots" iA
 \ldots
 endsnippet
@@ -196,12 +204,53 @@ snippet table "Table environment" b
 endsnippet
 
 snippet fig "Figure environment" b
-\begin{figure}[${1:htpb}]
+\begin{figure}[${1:htb}]
 	\centering
 	${2:\includegraphics[width=0.8\textwidth]{$3}}
 	\caption{${4:$3}}
-	\label{fig:${5:${3/\W+/-/g}}}
+	\label{fig:${5:${3/\.\w*$//}}}
 \end{figure}
+endsnippet
+
+snippet subfig "Subfigure environment" b
+\begin{figure}[${1:htb}]
+	\centering
+	\hspace*{\fill}
+	\begin{subfigure}[b]{${2:0.45\textwidth}}
+		\centering
+		\includegraphics[width=0.95\linewidth]{$3}
+		\caption{${4:$3}}
+	\label{fig:${5:${3/\.\w*$//}}}
+	\end{subfigure}
+	\hspace*{\fill}
+	\begin{subfigure}[b]{${6:0.45\textwidth}}
+		\centering
+		\includegraphics[width=0.95\linewidth]{$7}
+		\caption{${8:$7}}
+		\label{fig:${9:${7/\.\w*$//}}}
+	\end{subfigure}
+	\hspace*{\fill}
+	\caption{${10:$3 and $7}}
+	\label{fig:${5:${3/\.\w*$//}_${9:${7/\.\w*$//}}}}
+\end{figure}
+endsnippet
+
+snippet wrapfig "Wrapfigure environment" b
+\begin{wrapfigure}{${1:R}}{${2:0.35\linewidth}}
+    \centering
+    \includegraphics[width=\linewidth]{$3}
+	\caption{${4:caption}}
+	\label{fig:${5:${3/\.\w*$//}}}
+\end{wrapfigure}
+endsnippet
+
+snippet vdef "vivek comment def" w
+\providecommand{\vivek}[2][]{{\protect\color{violet}{[\textbf{Vivek\if\relax#1\relax\else(#1)\fi:} #2]}}}
+endsnippet
+
+snippet vcom "vivek comment" w
+\vivek[`!v strftime('%m/%d')`]{${1:comment}}
+$0
 endsnippet
 
 snippet list "Labeled Enumerate" bA
@@ -237,11 +286,6 @@ snippet lib "Tikz Library" b
 endsnippet
 
 
-snippet pr "Problem" bA
-\problem*
-$0
-endsnippet
-
 snippet sol "Solution" bA
 \begin{solution}
 	$0
@@ -261,8 +305,8 @@ snippet => "implies" Ai
 \implies
 endsnippet
 
-snippet dkl "Dkl" Ai
-D_{\mathrm{KL}}\left[$1\middle\|$2\right]$0
+snippet Dkl "Dkl" w
+D_{\mathrm{KL}}\left($1\middle\|$2\right)$0
 endsnippet
 
 snippet =< "implied by" Ai
@@ -274,7 +318,7 @@ snippet iff "iff" Ai
 \iff
 endsnippet
 
-snippet mk "Math" wA
+snippet mk "Math" iA
 $${1:${VISUAL}}$`!p
 if t[2] and t[2][0] not in [',', '.', '?', '-', ' ']:
 	snip.rv = ' '
@@ -289,18 +333,24 @@ ${1:${VISUAL}}
 \] $0
 endsnippet
 
-snippet eqn "Align" bA
+snippet eqn "equation" bA
 \begin{equation}
 	${1:${VISUAL}}
 \end{equation}
 endsnippet
 
-snippet ali "Align" bA
-\begin{align*}
+snippet ali "align" bA
+\begin{align}
 	${1:${VISUAL}}
-\end{align*}
+\end{align}
 endsnippet
 
+
+snippet page "minipage" b
+\begin{minipage}{$1\linewidth}
+	${VISUAL}$0
+\end{minipage}
+endsnippet
 
 
 context "math()"
@@ -450,6 +500,10 @@ snippet sum "sum" w
 \sum_{${1:n=1}}^{${2:\infty}} ${3}
 endsnippet
 
+snippet sumin "sum in" w
+\sum_{${1:x} \in ${2:X}} ${3}
+endsnippet
+
 snippet taylor "taylor" w
 \sum_{${1:k}=${2:0}}^{${3:\infty}} ${4:c_$1} (x-a)^$1 $0
 endsnippet
@@ -466,7 +520,7 @@ snippet prod "product" w
 \prod_{${1:n=${2:1}}}^{${3:\infty}} ${4:${VISUAL}} $0
 endsnippet
 
-snippet part "d/dx" w
+snippet partial "d/dx" w
 \frac{\partial ${1:V}}{\partial ${2:x}} $0
 endsnippet
 
@@ -501,7 +555,7 @@ _{$1}$0
 endsnippet
 
 context "math()"
-snippet sub "subscript2" iA
+snippet '(?<![\\])sub' "subscript2" irA
 _{$1}$0
 endsnippet
 
@@ -651,7 +705,7 @@ snippet plot "Plot" w
 endsnippet
 
 context "math()"
-snippet '(?<![\\])tr' "transpose" riA
+snippet '(?<![\\a-z])tr| +tr' "transpose" riA
 ^{T}
 endsnippet
 
@@ -663,10 +717,6 @@ endsnippet
 context "math()"
 snippet cal "mathcal" iA
 \mathcal{${1:${VISUAL}}}$0
-endsnippet
-
-snippet lll "l" iA
-\ell
 endsnippet
 
 context "math()"
@@ -697,7 +747,7 @@ endsnippet
 
 priority 100
 context "math()"
-snippet '(?<![\\a-zA-Z])(mu|xi|sigma|varepsilon|alpha|omega|lambda|beta|zeta|nu|theta|psi|phi|rho|epsilon|varphi|gamma|ell|delta|tau)' "greek" rwA
+snippet '(?<![\\a-zA-Z])(mu|sigma|varepsilon|alpha|omega|lambda|beta|zeta|nu|theta|psi|phi|rho|epsilon|varphi|gamma|ell|delta|tau)' "greek" rwA
 \\`!p snip.rv = match.group(1)`
 endsnippet
 
@@ -723,7 +773,7 @@ endsnippet
 priority 100
 context "math()"
 snippet -> "to" iA
-\to
+\to 
 endsnippet
 
 priority 200
@@ -747,6 +797,7 @@ snippet compl "complement" iA
 ^{c}
 endsnippet
 
+context "env('itemize') or env('enumerate') or env('description') or env('list')"
 snippet it "item" bA
 \item
 endsnippet
@@ -849,6 +900,11 @@ snippet <> "hokje" iA
 \diamond
 endsnippet
 
+context "math()"
+snippet teq "triangleq" iA
+\triangleq
+endsnippet
+
 
 context "math()"
 snippet '(?<!i)sts' "text subscript" irA
@@ -936,9 +992,18 @@ snippet letw "let omega" iA
 Let $\Omega \subset \C$ be open.
 endsnippet
 
+priority 100
 context "math()"
 snippet bb "mathbb" iA
 \mathbb{${1:${VISUAL}}}$0
+endsnippet
+
+snippet bb1 "bbm1" iA
+\textrm{\usefont{U}{DSSerif}{m}{n}{1}}
+endsnippet
+
+snippet bb2 "bbm2" iA
+\textrm{\usefont{U}{DSSerif}{m}{n}{2}}
 endsnippet
 
 context "math()"
@@ -973,4 +1038,45 @@ endsnippet
 
 snippet '(q)+' "quad" wr
 `!p snip.rv = r"\qquad"*(len(match.group(0))//2)+(len(match.group(0))%2)*r"\quad"` $0
+endsnippet
+
+
+snippet prob "Problem" b
+\begin{problem}
+	$0
+\end{problem}
+endsnippet
+
+snippet subprob "Subproblem" b
+\begin{problem*}
+	$0
+\end{problem*}
+endsnippet
+
+
+snippet part "Part" b
+\begin{part}
+	$0
+\end{part}
+endsnippet
+
+snippet ccc "cite" iA
+~\cite{$1}
+endsnippet
+
+snippet ccp "citep" iA
+~\citep{$1}
+endsnippet
+
+snippet cct "citet" iA
+\citet{$1}
+endsnippet
+
+snippet hp "hspace" w
+\hspace*{${1:1ex}}$0
+endsnippet
+
+snippet vp "vspace" w
+\vspace*{${1:1ex}}%
+$0
 endsnippet

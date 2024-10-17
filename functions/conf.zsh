@@ -2,17 +2,31 @@ load utils
 
 function exedit {
     local file="$(which $@ 2>/dev/null)"
-    test -f "$file" && vim +'set ft=bash' "$(readlink -f $file)"
+    test -f "$file" && {
+        if [[ -n "$PRINT" ]]; then
+            echo "$file"
+        else
+            vim +'set ft=bash' "$(readlink -f $file)"
+        fi
+        endconf "$file"
+    }
 }
 
 function editor { 
-    echo "$@" | grep -qE "vim" && $EDITOR "$@" ||
-    $EDITOR +"set ft=bash" +"filetype detect" "$@"
+    test -f "$1" && {
+        if [[ -n "$PRINT" ]]; then
+            echo "$@"
+        else
+            vim +"set ft=bash" +"filetype detect" "$@"
+        fi
+    }
 }
 
 function endconf {
-    ( commit_config "$1" & ) >> ~/.local/var/commit_config.log 2>&1
-    test -z "$CONFCONT" && reprof;
+    if [[ -z "$PRINT" ]]; then
+        ( commit_config "$1" & ) >> ~/.local/var/commit_config.log 2>&1
+    fi
+    test -z "$CONFCONT" && exit;
 }
 
 function tryedit {
@@ -22,12 +36,39 @@ function tryedit {
     fi
 }
 
-function conf {
+(
+
+    while :; do
+        case "$1" in
+            -h|--help)
+                echo "Usage: conf [-pc] [name]"
+                echo "Edit configuration files"
+                exit 0
+                ;;
+            -p|--print)
+                shift
+                export PRINT=1
+                ;;
+            -c|--continue)
+                shift
+                export CONFCONT=1
+                ;;
+            -pc|-cp)
+                shift
+                export PRINT=1
+                export CONFCONT=1
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
     if [[ ! -n "$1" ]]; then
         endconf
     fi
     if [[ "$1" == "makefile" ]] || [[ "$1" == "make" ]]; then
-        vim ~/config/makefile
+        tryedit ~/config/makefile
         endconf
     fi
     tryedit "$HOME/.$1"
@@ -46,9 +87,11 @@ function conf {
     tryedit "$HOME/.vim/$1"
     tryedit "$HOME/.vim/autoload/$1"
     tryedit "$(sourced | grep -E "/$1$|/$1\.[^.]*$" | tail -n1)"
-    editdef "$1" && endconf "$1"
-    exedit "$1" && endconf "$1"
-    return 1
-}
+    PRINT=$PRINT editdef "$1"
+    exedit "$1"
+    exit 1
+) &&
+if [[ -z "$PRINT" ]]; then
+    reprof
+fi
 
-conf "$@"

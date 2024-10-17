@@ -21,8 +21,9 @@ alias res='cd ~/Documents/Research'
 alias desk='cd ~/Desktop'
 alias bin='cd /usr/local/bin'
 alias less="less -r"
+alias template="nocorrect template"
 
-alias gvim="test -e .git && vim +'G' +'norm!o'"
+alias gvim="vim +'G' +'norm!o'"
 alias otp='sshpass -p $(google_auth.py)'
 alias ladog='git log --all --decorate --oneline --graph'
 
@@ -30,3 +31,4 @@ alias monero=monero-wallet-cli
 
 bindkey -s "^Q" '^Acd ^M'
 bindkey -s "^V" '^Usvim^M'
+

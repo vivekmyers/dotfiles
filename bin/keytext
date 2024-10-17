@@ -1,0 +1,28 @@
+#!/bin/bash
+
+mkdir -p $2
+
+read -r -d '' SCRIPT <<OSASCRIPT
+tell application "Keynote"
+	activate
+	tell front document
+        set keynote_path to "$1"
+        set keynote_file to open (keynote_path as POSIX file)
+		set thePresentationName to name
+		set theTitles to object text of default title item of every slide
+		set theNotes to presenter notes of every slide
+	end tell
+end tell
+set presenterNotes to ""
+repeat with a from 1 to length of theTitles
+	if not (item a of theNotes) = "" then
+		set presenterNotes to presenterNotes & "#### Slide " & a & ": " & item a of theTitles & return & return
+		set presenterNotes to presenterNotes & "##### Presenter Notes: " & return & item a of theNotes & return & return
+	end if
+end repeat
+
+set the clipboard to presenterNotes
+repeat with a from 1 to length of theTitles
+    do shell script "pbpaste > $2/notes/" & quoted form of thePresentationName & ".md"
+end repeat
+OSASCRIPT

@@ -1,0 +1,33 @@
+snippet compdef "Zsh completion function" b
+#compdef `!v expand('%:t:r')`
+
+local state
+local -a options
+local -a letters
+
+_arguments \
+    '1: :->function' \
+    '2: :->command' \
+    '-d[some dir]:direction:((North East South West))' \
+    '-o[some option]:option:->option' \
+    '-l[some letter]:letter:->letter' \
+    '*: :->files' \
+
+options=(
+    'zsh:Zsh completion function'
+    'bash:Bash completion function'
+)
+
+letters=(
+    {a..z}
+)
+
+case $state in
+    (function) _arguments ':function:($(ls $HOME/config/functions | xargs basename -s .zsh))' ;;
+    (command) _arguments '*:command:($(print -rC1 -- ${commands} | sed "s|.*/||"))' ;;
+    (option) _describe choices options -o nosort ;;
+    (letter) _describe choices letters ;;
+    (files) _arguments '*:file:->_files' ;;
+esac
+
+endsnippet

@@ -1,1 +1,1 @@
-find "${1-$PWD}" -type f -name "*.sw[klmnop]" -print -delete 
+find "${1-$PWD}" -type f -and \( -name "*.sw[klmnop]" -or -name .DS_Store \) -and -print -and -delete 
